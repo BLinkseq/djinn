@@ -10,3 +10,6 @@ build/
 .pixi/*
 !.pixi/config.toml
 pixi.lock
+node_modules
+.astro
+.comments
