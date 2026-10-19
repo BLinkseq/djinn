@@ -38,24 +38,6 @@ func TestIsValid(t *testing.T) {
 	}
 }
 
-func TestBoolToInt(t *testing.T) {
-	if BoolToInt(true) != 1 {
-		t.Errorf("BoolToInt(true) = %d, want 1", BoolToInt(true))
-	}
-	if BoolToInt(false) != 0 {
-		t.Errorf("BoolToInt(false) = %d, want 0", BoolToInt(false))
-	}
-}
-
-func TestBoolToSInt(t *testing.T) {
-	if got := BoolToSInt(true); got != "1" {
-		t.Errorf("BoolToSInt(true) = %q, want %q", got, "1")
-	}
-	if got := BoolToSInt(false); got != "0" {
-		t.Errorf("BoolToSInt(false) = %q, want %q", got, "0")
-	}
-}
-
 func newRecord(t *testing.T, name string) *sam.Record {
 	t.Helper()
 	rec, err := sam.NewRecord(name, nil, nil, -1, -1, 0, 0, nil, []byte("ACGT"), nil, nil)
@@ -306,15 +288,6 @@ func TestFindBarcodeExplicitVXHonored(t *testing.T) {
 	}
 	if !gotVX {
 		t.Errorf("FindBarcode vx = false, want true (explicit VX tag should be honored)")
-	}
-}
-
-func TestPairedFlag(t *testing.T) {
-	if got := PairedFlag(true); got != 77 {
-		t.Errorf("PairedFlag(true) = %d, want 77", got)
-	}
-	if got := PairedFlag(false); got != 141 {
-		t.Errorf("PairedFlag(false) = %d, want 141", got)
 	}
 }
 

@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 
@@ -46,14 +45,6 @@ func fileReadable(filename string) error {
 	}
 	file.Close()
 	return nil
-}
-
-// check if executable 'e' is in path, returns true if it is, otherwise false
-func checkIfExecInPath(e string) bool {
-	// ignore output, only use error
-	_, err := exec.LookPath(e)
-	// return true if error nil, else false
-	return err == nil
 }
 
 // Check if the input path has write permissions

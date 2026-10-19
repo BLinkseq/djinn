@@ -73,15 +73,6 @@ func TestFilecheck(t *testing.T) {
 	}
 }
 
-func TestCheckIfExecInPath(t *testing.T) {
-	if !checkIfExecInPath("ls") {
-		t.Errorf("expected 'ls' to be found in PATH")
-	}
-	if checkIfExecInPath("this-executable-should-not-exist-anywhere-xyz") {
-		t.Errorf("expected bogus executable to not be found in PATH")
-	}
-}
-
 func TestEnsureWritableDir(t *testing.T) {
 	dir := t.TempDir()
 

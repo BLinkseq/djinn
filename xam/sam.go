@@ -37,26 +37,6 @@ func IsValid(barcode string) bool {
 	return true
 }
 
-// Convenience function to convert a boolean to integer,
-// where false -> 0 and true -> 1.
-func BoolToInt(vx bool) int {
-	var i int
-	if vx {
-		i = 1
-	}
-	return i
-}
-
-// Convenience function to convert a boolean to integer string,
-// where false -> "0" and true -> "1".
-func BoolToSInt(vx bool) string {
-	if vx {
-		return "1"
-	} else {
-		return "0"
-	}
-}
-
 // isBase reports whether b is one of the DNA bases used in barcode text
 // (including the ambiguity code N).
 func isBase(b byte) bool {
@@ -281,13 +261,4 @@ func AlignedEnd(r *sam.Record) int {
 		n = 1
 	}
 	return r.Pos + n
-}
-
-// pairedFlag returns the SAM FLAG integer for a paired unmapped read.
-// R1: 0x1|0x4|0x8|0x40 = 77   R2: 0x1|0x4|0x8|0x80 = 141
-func PairedFlag(isRead1 bool) int {
-	if isRead1 {
-		return 77
-	}
-	return 141
 }
