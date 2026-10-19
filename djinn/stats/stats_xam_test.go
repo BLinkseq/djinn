@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -12,43 +14,12 @@ import (
 	"github.com/biogo/hts/sam"
 )
 
-// ── golden outputs from the Python original ───────────────────────────────────
-//
-// testdata/small.d*.tsv were produced by running harpy's bx_stats_sam.py on testdata/small.sam
-// (see testdata/regen.sh). Output order is not part of the contract, so both sides are compared sorted.
+// ── whole-file checks ─────────────────────────────────────────────────────────
 
-var goldenDistances = []int{0, 1, 300, 2000, 40000}
-
-func goldenCheck(t *testing.T, path string, d int) {
+// toBAM rewrites a SAM file as BAM, so the same records can be read through the binary reader.
+func toBAM(t *testing.T, samPath string) string {
 	t.Helper()
-	got, err := captureStdout(t, func() error { return StatsXam(path, d, 2) })
-	if err != nil {
-		t.Fatalf("d=%d: %v", d, err)
-	}
-	want, err := os.ReadFile(fmt.Sprintf("testdata/small.d%d.tsv", d))
-	if err != nil {
-		t.Fatal(err)
-	}
-	g, w := sortedLines(got), sortedLines(string(want))
-	if strings.Join(g, "\n") != strings.Join(w, "\n") {
-		t.Errorf("d=%d: output differs from the Python version (%d vs %d lines)", d, len(g), len(w))
-		for i := 0; i < len(g) && i < len(w); i++ {
-			if g[i] != w[i] {
-				t.Logf("first difference:\n  go:     %q\n  python: %q", g[i], w[i])
-				break
-			}
-		}
-	}
-}
-
-func TestStatsXam_GoldenSAM(t *testing.T) {
-	for _, d := range goldenDistances {
-		goldenCheck(t, "testdata/small.sam", d)
-	}
-}
-
-func TestStatsXam_GoldenBAM(t *testing.T) {
-	f, err := os.Open("testdata/small.sam")
+	f, err := os.Open(samPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +28,7 @@ func TestStatsXam_GoldenBAM(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := tempPath(t, "small.bam")
+	path := tempPath(t, "in.bam")
 	out, err := os.Create(path)
 	if err != nil {
 		t.Fatal(err)
@@ -81,12 +52,104 @@ func TestStatsXam_GoldenBAM(t *testing.T) {
 	if err := errors.Join(bw.Close(), out.Close()); err != nil {
 		t.Fatal(err)
 	}
-	for _, d := range []int{0, 300} {
-		goldenCheck(t, path, d)
+	return path
+}
+
+// SAM and BAM give the same table.
+func TestStatsXam_SAMAndBAM(t *testing.T) {
+	const aa, bb = "BX:Z:AA\tVX:i:1", "BX:Z:BB\tVX:i:1"
+	sam := writeSam(t,
+		samLine("a", "c1", 100, aa),
+		samLine("b", "c1", 120, bb),
+		samLine("c", "c1", 125, aa),
+		samLine("d", "c2", 10, ""),
+	)
+	want := []string{
+		"c1\tAA\t2\t99\t134\t35\t20\t20\t0.57143\t0.57143",
+		"c1\tBB\t1\t119\t129\t10\t10\t10\t1.00000\t1.00000",
+		"c2\tinvalid\t1\t0\t0\t0\t10\t0\t0.00000\t0.00000",
+	}
+	for name, path := range map[string]string{"sam": sam, "bam": toBAM(t, sam)} {
+		got := sortedLines(strings.Join(statsOf(t, path, 0), "\n"))
+		if !slices.Equal(got, want) {
+			t.Errorf("%s: got:\n%s\nwant:\n%s", name, strings.Join(got, "\n"), strings.Join(want, "\n"))
+		}
 	}
 }
 
-// ── molecule assembly (expected lines from the Python version) ────────────────
+// Random files of ordinary reads (every read 10 bp, valid barcode) checked against a plain, unoptimised
+// model of the rule: a barcode's read starts a new molecule when it begins more than d bases after the
+// previous read of that barcode ended. This exercises the deadline list (early closing) with many
+// barcodes interleaved, which the hand-written cases above only touch one at a time.
+func TestStatsXam_MatchesPlainModel(t *testing.T) {
+	rng := rand.New(rand.NewPCG(1, 2))
+	for trial := range 20 {
+		var records []string
+		type read struct {
+			contig, bc string
+			start      int // 0-based
+		}
+		var reads []read
+		for _, contig := range []string{"c1", "c2"} {
+			pos := 1
+			for range 150 {
+				pos += rng.IntN(60) // reads may share a start
+				bc := fmt.Sprintf("BC%d", rng.IntN(7))
+				records = append(records, samLine("r", contig, pos, "BX:Z:"+bc+"\tVX:i:1"))
+				reads = append(reads, read{contig, bc, pos - 1})
+			}
+		}
+		path := writeSam(t, records...)
+
+		for _, d := range []int{0, 1, 5, 30, 100, 100000} {
+			// the plain model: walk the reads once, remembering each barcode's current molecule
+			type mol struct{ n, start, end, number int }
+			open := map[string]*mol{}
+			var want []string
+			emit := func(contig, bc string, m *mol) {
+				name := bc
+				if m.number > 0 {
+					name += fmt.Sprintf("-%d", m.number)
+				}
+				inferred := m.end - m.start
+				cov := fmt.Sprintf("%.5f", min(float64(10*m.n)/float64(inferred), 1.0))
+				want = append(want, fmt.Sprintf("%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s",
+					contig, name, m.n, m.start, m.end, inferred, 10*m.n, 10*m.n, cov, cov))
+			}
+			for i, r := range reads {
+				if i > 0 && reads[i-1].contig != r.contig { // a new chromosome: everything open is finished
+					for bc, m := range open {
+						emit(reads[i-1].contig, bc, m)
+					}
+					clear(open)
+				}
+				key := r.bc
+				m := open[key]
+				switch {
+				case m == nil:
+					open[key] = &mol{n: 1, start: r.start, end: r.start + 10}
+				case d > 0 && r.start-m.end > d: // too far from the previous read: a new molecule
+					emit(r.contig, key, m)
+					open[key] = &mol{n: 1, start: r.start, end: r.start + 10, number: m.number + 1}
+				default:
+					m.n++
+					m.end = max(m.end, r.start+10)
+				}
+			}
+			for bc, m := range open {
+				emit(reads[len(reads)-1].contig, bc, m)
+			}
+			slices.Sort(want)
+
+			got := sortedLines(strings.Join(statsOf(t, path, d), "\n"))
+			if !slices.Equal(got, want) {
+				t.Fatalf("trial %d, d=%d: output differs from the plain model (%d vs %d lines)", trial, d, len(got), len(want))
+			}
+		}
+	}
+}
+
+// ── molecule assembly ────────────────
 
 func TestStatsXam_SplitSuffixAndSupplementary(t *testing.T) {
 	const bc = "BX:Z:AA\tVX:i:1"

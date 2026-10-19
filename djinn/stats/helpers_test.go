@@ -7,7 +7,7 @@ import (
 	"github.com/biogo/hts/sam"
 )
 
-// The expected values below come from running pysam / Python, which the molecule table has to match.
+// The expected values below are the pysam results the molecule table has to match.
 
 // alignedLength / inferredQueryLength: cigar, SEQ length (0 = absent), then pysam's query_alignment_length and infer_query_length
 var lengthCases = []struct {

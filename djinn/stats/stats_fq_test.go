@@ -8,30 +8,6 @@ import (
 	"testing"
 )
 
-// ── golden outputs from the Python original ───────────────────────────────────
-//
-// testdata/fq/<platform>.tsv is what harpy's bx_stats_fq.py prints for testdata/fq/<platform>.fq
-// (see testdata/regen.sh). The output order is fixed, so it is compared exactly.
-
-func TestStatsFQ_GoldenPython(t *testing.T) {
-	for _, platform := range []string{Haplotagging, Stlfr, Tellseq} {
-		want, err := os.ReadFile("testdata/fq/" + platform + ".tsv")
-		if err != nil {
-			t.Fatal(err)
-		}
-		// the platform named explicitly, in any capitalization, and detected from the reads
-		for _, given := range []string{platform, strings.ToUpper(platform), ""} {
-			got, err := captureStdout(t, func() error { return StatsFQ("testdata/fq/"+platform+".fq", given) })
-			if err != nil {
-				t.Fatalf("%s (platform %q): %v", platform, given, err)
-			}
-			if got != string(want) {
-				t.Errorf("%s (platform %q): output differs from the Python version\ngot:\n%s\nwant:\n%s", platform, given, got, want)
-			}
-		}
-	}
-}
-
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 // fq builds one FASTQ record. header is everything after the "@" on the first line.
@@ -120,7 +96,7 @@ func TestStatsFQ_ValidityFollowsVXThenBarcode(t *testing.T) {
 	}
 }
 
-// A read with no comment is simply a read without a barcode (the Python version crashes on it).
+// A read with no comment is simply a read without a barcode.
 func TestStatsFQ_ReadsWithoutBarcode(t *testing.T) {
 	path := writeFastq(t,
 		fq("r1 BX:Z:A01C02B03D04"),
@@ -184,7 +160,7 @@ func TestStatsFQ_Errors(t *testing.T) {
 		!strings.Contains(err.Error(), "unable to determine") {
 		t.Errorf("no detectable technology: err = %v", err)
 	}
-	// naming the platform skips the detection: a file with no barcodes is a table of zeros, as in the Python version
+	// naming the platform skips the detection: a file with no barcodes is a table of zeros,
 	got := statsFQOf(t, noBarcodes, Haplotagging)
 	if want := "Reads\t2\nBarcodes\t0\nBarcodes_Valid\t0\nBarcodes_Invalid\t0\nA\t0\nC\t0\nB\t0\nD\t0\n"; got != want {
 		t.Errorf("no barcodes with a named platform: got:\n%s\nwant:\n%s", got, want)

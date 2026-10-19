@@ -13,7 +13,7 @@ import (
 // end that were left out, "soft clipped"), 2I (2 extra bases in the read) or 3D (3 bases missing
 // from the read). The functions below read that recipe to measure a read.
 //
-// They copy the exact rules of pysam (the Python library the original script used), quirks
+// They copy the exact rules of pysam (the library the original script used), quirks
 // included, because the numbers must match the original program's output digit for digit.
 
 // alignedLength is the number of bases of the read that actually line up with the reference,
