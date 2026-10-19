@@ -192,22 +192,26 @@ func findIlluminaOld(id []byte) (start, end int, ok bool) {
 	return n - 2, n, true
 }
 
-// splitCASAVA removes a paired-end/CASAVA marker from id or desc — new
-// style lives in desc, old style at the end of id — and returns the
-// (possibly shortened) id/desc plus a copy of the extracted marker. The
-// copy is necessary: it's read back out after the in-place splice below,
-// which reuses the same backing array (the same hazard HaplotagBX's bc
-// copy guards against in processfq.go).
+// splitCASAVA removes the paired-end/CASAVA markers from id and desc -- new style
+// ("1:N:0:ATCG") lives in desc, old style ("/1" or "/2") at the end of id -- and returns
+// the shortened id and desc plus a copy of the marker that was removed.
+//
+// Both are always taken out, so a read carrying both (e.g. "read#1_2_3/1 1:N:0:ATCG") still
+// leaves a clean id for the barcode search that follows. When both are present the new-style
+// marker is the one returned, since it says more.
 func splitCASAVA(id, desc []byte) (newID, newDesc, casava []byte) {
-	if s, e, ok := findIlluminaNew(desc); ok {
-		casava = append([]byte(nil), desc[s:e]...)
-		return id, spliceField(desc, s, e), casava
+	newID, newDesc = id, desc
+	// The markers are copied out before any splice: the splices reuse the same backing arrays,
+	// which would otherwise overwrite what casava points at.
+	if s, e, ok := findIlluminaOld(newID); ok {
+		casava = append([]byte(nil), newID[s+1:e]...) // digit only, "/" dropped
+		newID = newID[:s]                             // the marker is the very end of the id
 	}
-	if s, e, ok := findIlluminaOld(id); ok {
-		casava = append([]byte(nil), id[s+1:e]...) // digit only, "/" dropped
-		return append(id[:s], id[e:]...), desc, casava
+	if s, e, ok := findIlluminaNew(newDesc); ok {
+		casava = append([]byte(nil), newDesc[s:e]...)
+		newDesc = spliceField(newDesc, s, e)
 	}
-	return id, desc, nil
+	return newID, newDesc, casava
 }
 
 // ---- Conversions -------------------------------------------------

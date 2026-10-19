@@ -1,7 +1,9 @@
 """Random linked-read FASTQ for bx_stats_fq: usage: gen_fq.py PLATFORM SEED N OUT.fq
 
 PLATFORM is haplotagging, stlfr or tellseq. Every read has a description (the Python original crashes on a
-haplotagging read with none), and every barcode is well formed, so Python and djinn agree on the output."""
+haplotagging read with none), and every barcode is well formed, so Python and djinn agree on the output.
+Names carry an old-style /1 or /2 on some reads and a new-style "1:N:0:ATCG" description on others, so many
+reads have both."""
 import random, sys
 
 platform, seed, n, out = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), sys.argv[4]
@@ -29,18 +31,18 @@ for i in range(n):
             comment = rng.choice([f" BX:Z:{bc}", f" 1:N:0:ATGGAGA\tBX:Z:{bc}", f"\tVX:i:{vx}\tBX:Z:{bc}", f" BX:Z:{bc}\tVX:i:{vx}", f" 1:N:0:ATGGAGA\tVX:i:{vx}\tBX:Z:{bc}"])
         else:
             comment = rng.choice([" 1:N:0:ATGGAGA", " xx:Z:1", " VX:i:0"])
-        header = f"@{base}{comment}"
+        header = f"@{base}{rng.choice(['', '/1', '/2'])}{comment}"
     elif platform == "stlfr":
         name = f"V300{rng.randint(1, 9999)}L1C001R{i:07d}"
         if has_bc:
             name += "#" + stlfr_bc(p_bad)
-        old_style = rng.choice(["", "/1", "/2"])   # old-style /1 or /2 on the name, or a new-style description, never both
-        header = f"@{name}{old_style}" + ("" if old_style else casava)
+        old_style = rng.choice(["", "/1", "/2"])   # an old-style /1 or /2 on the name, and/or a new-style description
+        header = f"@{name}{old_style}{casava}"
     else:
         name = base
         if has_bc:
             name += ":" + tellseq_bc(p_bad)
-        header = f"@{name}{casava}"
+        header = f"@{name}{rng.choice(['', '/1', '/2'])}{casava}"
     seq = "".join(rng.choice("ACGT") for _ in range(30))
     lines += [header, seq, "+", "I" * 30]
 open(out, "w").write("\n".join(lines) + "\n")
