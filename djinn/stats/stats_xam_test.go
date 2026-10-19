@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"container/heap"
 	"errors"
 	"fmt"
 	"io"
@@ -206,6 +207,85 @@ func TestStatsXam_BarcodeFromReadName(t *testing.T) {
 		"c1\tACGTACGTACGTACGTAC\t2\t99\t209\t110\t20\t20\t0.18182\t0.18182",
 		"c1\t1_2_3\t2\t299\t409\t110\t20\t20\t0.18182\t0.18182",
 		"c1\tinvalid\t3\t0\t0\t0\t30\t0\t0.0\t0.0",
+	}, "\n")), "\n")
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+// The deadline list must hand back the entry furthest to the left first, and break ties by barcode name.
+func TestEvictHeapOrder(t *testing.T) {
+	var h evictHeap
+	for _, e := range []evictEntry{{50, "b"}, {10, "z"}, {30, "a"}, {10, "a"}, {50, "a"}, {20, "m"}} {
+		heap.Push(&h, e)
+	}
+	var got []string
+	for h.Len() > 0 {
+		e := heap.Pop(&h).(evictEntry)
+		got = append(got, fmt.Sprintf("%d%s", e.end, e.bx))
+	}
+	if want := "10a 10z 20m 30a 50a 50b"; strings.Join(got, " ") != want {
+		t.Errorf("pop order = %v, want %s", got, want)
+	}
+}
+
+// A barcode that reappears after being closed early keeps counting its molecules (BARCODE-1, -2, ...).
+func TestStatsXam_NumberingContinuesAfterEarlyClose(t *testing.T) {
+	const bc = "BX:Z:AA\tVX:i:1"
+	path := writeSam(t,
+		samLine("a", "c1", 100, bc),   // AA: 99..109
+		samLine("x", "c1", 5000, ""),  // moves the scan far past AA, so AA is closed early
+		samLine("b", "c1", 5100, bc),  // AA again: molecule AA-1
+		samLine("y", "c1", 10000, ""), // closes AA-1 early
+		samLine("c", "c1", 10100, bc), // AA again: molecule AA-2
+	)
+	got := strings.Join(sortedLines(strings.Join(statsOf(t, path, 100), "\n")), "\n")
+	want := strings.Join(sortedLines(strings.Join([]string{
+		"c1\tAA\t1\t99\t109\t10\t10\t10\t1.0\t1.0",
+		"c1\tAA-1\t1\t5099\t5109\t10\t10\t10\t1.0\t1.0",
+		"c1\tAA-2\t1\t10099\t10109\t10\t10\t10\t1.0\t1.0",
+		"c1\tinvalid\t2\t0\t0\t0\t20\t0\t0.0\t0.0",
+	}, "\n")), "\n")
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+// A barcode that gets a newer read leaves its older line on the deadline list. When that old line becomes
+// overdue it must be recognised as stale and discarded, not treated as the barcode being finished: here AA's
+// first line (read ending at 109) is overdue when BB arrives at 249, but AA's newer read ended at 159 and the
+// later AA read at 254 is still within 100 bp of it, so all three AA reads are one molecule.
+func TestStatsXam_StaleDeadlineEntryIsIgnored(t *testing.T) {
+	const aa, bb = "BX:Z:AA\tVX:i:1", "BX:Z:BB\tVX:i:1"
+	path := writeSam(t,
+		samLine("a1", "c1", 100, aa),
+		samLine("a2", "c1", 150, aa),
+		samLine("b", "c1", 250, bb),
+		samLine("a3", "c1", 255, aa),
+	)
+	got := strings.Join(sortedLines(strings.Join(statsOf(t, path, 100), "\n")), "\n")
+	want := strings.Join(sortedLines(strings.Join([]string{
+		"c1\tAA\t3\t99\t264\t165\t30\t30\t0.18182\t0.18182",
+		"c1\tBB\t1\t249\t259\t10\t10\t10\t1.0\t1.0",
+	}, "\n")), "\n")
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+// A gap of exactly the threshold does not split: only a gap bigger than it does. So when BB arrives at the
+// very position where AA's gap equals the threshold, AA must not be closed yet.
+func TestStatsXam_GapEqualToThresholdDoesNotSplit(t *testing.T) {
+	const aa, bb = "BX:Z:AA\tVX:i:1", "BX:Z:BB\tVX:i:1"
+	path := writeSam(t,
+		samLine("a", "c1", 100, aa),
+		samLine("b", "c1", 210, bb),
+		samLine("a2", "c1", 210, aa),
+	)
+	got := strings.Join(sortedLines(strings.Join(statsOf(t, path, 100), "\n")), "\n")
+	want := strings.Join(sortedLines(strings.Join([]string{
+		"c1\tAA\t2\t99\t219\t120\t20\t20\t0.16667\t0.16667",
+		"c1\tBB\t1\t209\t219\t10\t10\t10\t1.0\t1.0",
 	}, "\n")), "\n")
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
