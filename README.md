@@ -12,6 +12,12 @@ Get all the barcodes from the input file(s)
 ## Sort by barcode
 Sort records by barcode rather than name or position
 
+## Molecule statistics
+`djinn sam stats` summarizes each molecule of a coordinate-sorted SAM/BAM file: number of reads, start, end,
+inferred length, aligned bp, inferred insert length and coverage. Reads that share a barcode can be split into
+separate molecules with `--distance-threshold`. A barcode is valid when its `VX` tag says so, or, when there is
+no `VX` tag, when the barcode itself is valid.
+
 ## Filtering
 - separate linked reads from singletons
 - omit invalid barcodes
@@ -46,6 +52,7 @@ This is **extremely experimental** and it converts a paired-end linked-read fast
 | [x] | [x] | filter-singletons |   
 | [x] | [x] | ncbi              | 
 | [x] | [x] | sample            |               
+|     | [x] | stats             |
 | [ ] | [x] | sort              |             
 | [x] | [x] | standardize       | 
 | [ ] | [ ] | concat            |
