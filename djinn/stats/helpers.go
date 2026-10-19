@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"bytes"
 	"strconv"
 
 	"github.com/biogo/hts/sam"
@@ -103,34 +102,7 @@ func abs(n int) int {
 	return n
 }
 
-// ── number formatting ─────────────────────────────────────────────────────────
-//
-// The original program printed numbers the way Python does, so these functions reproduce
-// Python's habits: whole numbers print with ".0", tiny numbers print as "3e-05", and rounding
-// follows Python's rules.
-
-// appendPyFloat adds f to dst written the way Python's repr(float) writes it: the shortest digits
-// that read back as exactly f, ".0" on whole numbers, and an exponent for values below 1e-4.
-func appendPyFloat(dst []byte, f float64) []byte {
-	n := len(dst)
-	dst = strconv.AppendFloat(dst, f, 'g', -1, 64)
-	if !bytes.ContainsAny(dst[n:], ".e") { // no decimal point or exponent: a whole number like 1 or 0
-		dst = append(dst, ".0"...)
-	}
-	return dst
-}
-
-// pyFloat is appendPyFloat returning a string.
-func pyFloat(f float64) string { return string(appendPyFloat(nil, f)) }
-
-// coverage is num/denom, capped at 1 and rounded to 5 decimal places, never below 0. Rounding goes
-// through the decimal text so it matches Python's round(), which rounds from the number's exact
-// stored value (a plain "multiply, round, divide" can differ in the last digit).
-func coverage(num, denom int) float64 {
-	v := min(float64(num)/float64(denom), 1.0)
-	v, _ = strconv.ParseFloat(strconv.FormatFloat(v, 'f', 5, 64), 64)
-	if !(v > 0) { // also turns a "negative zero" into plain 0
-		return 0
-	}
-	return v
+// appendCoverage adds num/denom to dst as a fraction with 5 decimal places, capped at 1.
+func appendCoverage(dst []byte, num, denom int) []byte {
+	return strconv.AppendFloat(dst, min(float64(num)/float64(denom), 1.0), 'f', 5, 64)
 }

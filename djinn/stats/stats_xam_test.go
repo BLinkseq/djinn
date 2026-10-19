@@ -99,8 +99,8 @@ func TestStatsXam_SplitSuffixAndSupplementary(t *testing.T) {
 	)
 	got := statsOf(t, path, 100)
 	want := []string{
-		"c1\tAA\t2\t99\t129\t30\t27\t27\t0.9\t0.9",
-		"c1\tAA-1\t1\t4999\t5009\t10\t10\t10\t1.0\t1.0",
+		"c1\tAA\t2\t99\t129\t30\t27\t27\t0.90000\t0.90000",
+		"c1\tAA-1\t1\t4999\t5009\t10\t10\t10\t1.00000\t1.00000",
 	}
 	if strings.Join(sortedLines(strings.Join(got, "\n")), "\n") != strings.Join(sortedLines(strings.Join(want, "\n")), "\n") {
 		t.Errorf("got:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
@@ -118,8 +118,8 @@ func TestStatsXam_GapMeasuredFromPreviousRead(t *testing.T) {
 	)
 	got := statsOf(t, path, 100)
 	want := []string{
-		"c1\tAA\t2\t99\t199\t100\t110\t110\t1.0\t1.0",
-		"c1\tAA-1\t1\t299\t309\t10\t10\t10\t1.0\t1.0",
+		"c1\tAA\t2\t99\t199\t100\t110\t110\t1.00000\t1.00000",
+		"c1\tAA-1\t1\t299\t309\t10\t10\t10\t1.00000\t1.00000",
 	}
 	if strings.Join(sortedLines(strings.Join(got, "\n")), "\n") != strings.Join(sortedLines(strings.Join(want, "\n")), "\n") {
 		t.Errorf("got:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
@@ -158,7 +158,7 @@ func TestStatsXam_InvalidIsPooledPerContig(t *testing.T) {
 		samLine("c", "c2", 100, "BX:Z:AA\tVX:i:0"),
 	)
 	got := strings.Join(sortedLines(strings.Join(statsOf(t, path, 0), "\n")), "\n")
-	want := "c1\tinvalid\t2\t0\t0\t0\t20\t0\t0.0\t0.0\nc2\tinvalid\t1\t0\t0\t0\t10\t0\t0.0\t0.0"
+	want := "c1\tinvalid\t2\t0\t0\t0\t20\t0\t0.00000\t0.00000\nc2\tinvalid\t1\t0\t0\t0\t10\t0\t0.00000\t0.00000"
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
 	}
@@ -181,9 +181,9 @@ func TestStatsXam_VXInferredFromBarcode(t *testing.T) {
 	got := strings.Join(sortedLines(strings.Join(statsOf(t, path, 0), "\n")), "\n")
 	want := strings.Join(sortedLines(strings.Join([]string{
 		"c1\tA01C02B03D04\t2\t99\t209\t110\t20\t20\t0.18182\t0.18182",
-		"c1\tA09C02B03D04\t1\t499\t509\t10\t10\t10\t1.0\t1.0",
-		"c1\tA00C00B00D00\t1\t599\t609\t10\t10\t10\t1.0\t1.0",
-		"c1\tinvalid\t4\t0\t0\t0\t40\t0\t0.0\t0.0", // r3, r4, r7, r8
+		"c1\tA09C02B03D04\t1\t499\t509\t10\t10\t10\t1.00000\t1.00000",
+		"c1\tA00C00B00D00\t1\t599\t609\t10\t10\t10\t1.00000\t1.00000",
+		"c1\tinvalid\t4\t0\t0\t0\t40\t0\t0.00000\t0.00000", // r3, r4, r7, r8
 	}, "\n")), "\n")
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
@@ -205,7 +205,7 @@ func TestStatsXam_BarcodeFromReadName(t *testing.T) {
 	want := strings.Join(sortedLines(strings.Join([]string{
 		"c1\tACGTACGTACGTACGTAC\t2\t99\t209\t110\t20\t20\t0.18182\t0.18182",
 		"c1\t1_2_3\t2\t299\t409\t110\t20\t20\t0.18182\t0.18182",
-		"c1\tinvalid\t3\t0\t0\t0\t30\t0\t0.0\t0.0",
+		"c1\tinvalid\t3\t0\t0\t0\t30\t0\t0.00000\t0.00000",
 	}, "\n")), "\n")
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
@@ -224,10 +224,10 @@ func TestStatsXam_NumberingContinuesAfterEarlyClose(t *testing.T) {
 	)
 	got := strings.Join(sortedLines(strings.Join(statsOf(t, path, 100), "\n")), "\n")
 	want := strings.Join(sortedLines(strings.Join([]string{
-		"c1\tAA\t1\t99\t109\t10\t10\t10\t1.0\t1.0",
-		"c1\tAA-1\t1\t5099\t5109\t10\t10\t10\t1.0\t1.0",
-		"c1\tAA-2\t1\t10099\t10109\t10\t10\t10\t1.0\t1.0",
-		"c1\tinvalid\t2\t0\t0\t0\t20\t0\t0.0\t0.0",
+		"c1\tAA\t1\t99\t109\t10\t10\t10\t1.00000\t1.00000",
+		"c1\tAA-1\t1\t5099\t5109\t10\t10\t10\t1.00000\t1.00000",
+		"c1\tAA-2\t1\t10099\t10109\t10\t10\t10\t1.00000\t1.00000",
+		"c1\tinvalid\t2\t0\t0\t0\t20\t0\t0.00000\t0.00000",
 	}, "\n")), "\n")
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
@@ -249,7 +249,7 @@ func TestStatsXam_StaleDeadlineEntryIsIgnored(t *testing.T) {
 	got := strings.Join(sortedLines(strings.Join(statsOf(t, path, 100), "\n")), "\n")
 	want := strings.Join(sortedLines(strings.Join([]string{
 		"c1\tAA\t3\t99\t264\t165\t30\t30\t0.18182\t0.18182",
-		"c1\tBB\t1\t249\t259\t10\t10\t10\t1.0\t1.0",
+		"c1\tBB\t1\t249\t259\t10\t10\t10\t1.00000\t1.00000",
 	}, "\n")), "\n")
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
@@ -268,7 +268,7 @@ func TestStatsXam_GapEqualToThresholdDoesNotSplit(t *testing.T) {
 	got := strings.Join(sortedLines(strings.Join(statsOf(t, path, 100), "\n")), "\n")
 	want := strings.Join(sortedLines(strings.Join([]string{
 		"c1\tAA\t2\t99\t219\t120\t20\t20\t0.16667\t0.16667",
-		"c1\tBB\t1\t209\t219\t10\t10\t10\t1.0\t1.0",
+		"c1\tBB\t1\t209\t219\t10\t10\t10\t1.00000\t1.00000",
 	}, "\n")), "\n")
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)

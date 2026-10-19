@@ -231,13 +231,6 @@ func (t *tracker) write(m *molecule) {
 func appendLine(dst []byte, m *molecule) []byte {
 	inferred := m.end - m.start // the molecule's length as seen from where its reads landed
 
-	// Coverage: the fraction of the inferred length actually backed by aligned bases (or by fragment
-	// length), capped at 1. An empty molecule (length 0) has no meaningful fraction, so it is 0.
-	var covBP, covInsert float64
-	if inferred != 0 {
-		covBP, covInsert = coverage(m.bp, inferred), coverage(m.insert, inferred)
-	}
-
 	dst = append(dst, m.chrom...)
 	dst = append(dst, '\t')
 	dst = append(dst, m.name...)
@@ -245,9 +238,16 @@ func appendLine(dst []byte, m *molecule) []byte {
 		dst = append(dst, '\t')
 		dst = strconv.AppendInt(dst, int64(n), 10)
 	}
-	dst = append(dst, '\t')
-	dst = appendPyFloat(dst, covBP)
-	dst = append(dst, '\t')
-	dst = appendPyFloat(dst, covInsert)
+
+	// Coverage: the fraction of the inferred length actually backed by aligned bases (or by fragment
+	// length), capped at 1. An empty molecule (length 0) has no meaningful fraction, so it is 0.
+	for _, n := range [...]int{m.bp, m.insert} {
+		dst = append(dst, '\t')
+		if inferred == 0 {
+			dst = append(dst, "0.00000"...)
+		} else {
+			dst = appendCoverage(dst, n, inferred)
+		}
+	}
 	return append(dst, '\n')
 }
