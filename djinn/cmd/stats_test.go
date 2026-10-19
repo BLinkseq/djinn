@@ -34,6 +34,20 @@ func TestStatsXamArgs(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
+	t.Run("negative distance threshold", func(t *testing.T) {
+		setStringFlag(t, statsXamCmd.Flags(), "distance-threshold", "-1")
+		defer setStringFlag(t, statsXamCmd.Flags(), "distance-threshold", "0")
+		if err := statsXamCmd.Args(statsXamCmd, []string{valid}); err == nil {
+			t.Errorf("expected error for a negative distance threshold")
+		}
+	})
+	t.Run("positive distance threshold", func(t *testing.T) {
+		setStringFlag(t, statsXamCmd.Flags(), "distance-threshold", "50000")
+		defer setStringFlag(t, statsXamCmd.Flags(), "distance-threshold", "0")
+		if err := statsXamCmd.Args(statsXamCmd, []string{valid}); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
 }
 
 func TestDeconvolveXamArgs(t *testing.T) {

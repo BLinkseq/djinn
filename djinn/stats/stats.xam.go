@@ -10,9 +10,9 @@
 // starts, where the furthest one ends, how many bases lined up, and so on. When a
 // chromosome is finished it prints one line of the table per barcode and forgets them.
 //
-// Each barcode is taken as one molecule. If the same barcode came from several molecules, first
-// separate them with `djinn sam deconvolve`, which numbers them (ACGT, ACGT-1, ACGT-2, ...); this
-// package then reports each numbered barcode as a molecule of its own.
+// Reads sharing a barcode are separated into molecules where the gap between consecutive reads is
+// bigger than a chosen distance (see package deconvolve, which does the separating); a molecule is
+// printed as soon as the scan has moved too far past it for another read to join it.
 package stats
 
 import (
@@ -22,6 +22,7 @@ import (
 	"os"
 	"strconv"
 
+	"djinn/deconvolve"
 	"djinn/xam"
 
 	"github.com/biogo/hts/sam"
@@ -33,18 +34,18 @@ const header = "contig\tmolecule\treads\tstart\tend\tlength_inferred\taligned_bp
 // ErrNotSorted is returned when the input is not coordinate sorted.
 // "Coordinate sorted" means the reads are listed in order of where they sit on each
 // chromosome. The whole method relies on that order, so we refuse to guess without it.
-var ErrNotSorted = errors.New("input alignment file does not appear to be coordinate-sorted, " +
-	"which will result in incorrect output statistics. Please sort the alignments by coordinates (e.g. samtools sort) and try again")
+var ErrNotSorted = deconvolve.ErrNotSorted
 
 // StatsXam writes one line per molecule of infile to stdout.
 //
 // Records are grouped by barcode, found with xam.FindBarcode: the BX tag, or a TELLseq/stLFR
 // style barcode in the read name. A barcode is valid when the VX tag says so, or, with no VX tag,
 // when the barcode itself is valid. Reads without a valid barcode are pooled into one "invalid"
-// line per contig.
+// line per contig. Reads sharing a barcode are split into separate molecules (BARCODE-1, ...) when
+// the gap between consecutive reads exceeds distance; distance 0 never splits.
 //
 // The input must be coordinate sorted. Molecules written before a sorting error are still output.
-func StatsXam(infile string, threads int) error {
+func StatsXam(infile string, distance, threads int) error {
 	infile = xam.FileOrStdin(infile) // "" means "read from a pipe", so this decides file vs. stdin
 
 	// A background worker reads the file and hands us records through a channel (a conveyor belt).
@@ -56,7 +57,7 @@ func StatsXam(infile string, threads int) error {
 	out := bufio.NewWriterSize(os.Stdout, xam.IoBuf)
 	_, _ = out.WriteString(header) // (see above: errors are reported by Flush)
 
-	runErr := run(recChan, out)
+	runErr := run(recChan, out, distance)
 	if runErr != nil {
 		// We stopped early, so the reader may still be holding unread records. Let it finish up in the
 		// background instead of leaving it stuck waiting for us to take the next one.
@@ -72,14 +73,14 @@ func StatsXam(infile string, threads int) error {
 }
 
 // run reads every record from recs and writes the molecule table to w.
-func run(recs <-chan *sam.Record, w io.Writer) error {
-	t := newTracker(w)
+func run(recs <-chan *sam.Record, w io.Writer, distance int) error {
+	t := newTracker(w, distance)
 	for rec := range recs {
 		if err := t.process(rec); err != nil {
 			return err
 		}
 	}
-	t.flushAll() // end of the file: print whatever is still open
+	t.split.Finish() // end of the file: prints whatever molecules are still open
 	return nil
 }
 
@@ -154,68 +155,60 @@ type tracker struct {
 	w    io.Writer
 	line []byte // scratch space reused for each output line, so printing does not allocate each time
 
-	molecules map[string]*molecule // every barcode being followed on the current chromosome
+	split     *deconvolve.Splitter // says which molecule of its barcode each read belongs to
+	molecules map[string]*molecule // the open molecule of every barcode being followed, by barcode
 	invalid   *invalidPool         // reads without a valid barcode on the current chromosome, pooled together
-
-	lastContig string // the chromosome of the previous read
-	lastPos    int    // where the previous read started, to check the file really is sorted
 }
 
-func newTracker(w io.Writer) *tracker {
-	return &tracker{w: w, molecules: map[string]*molecule{}}
+func newTracker(w io.Writer, distance int) *tracker {
+	t := &tracker{w: w, molecules: map[string]*molecule{}, split: deconvolve.NewSplitter(distance)}
+	// Print a molecule the moment the scan has moved too far past it for another read to join it, and
+	// print whatever is still open when a chromosome ends.
+	t.split.OnClose(t.closeMolecule)
+	t.split.OnContigEnd(t.flushAll)
+	return t
 }
 
 // process deals with one record from the file.
 func (t *tracker) process(rec *sam.Record) error {
-	// Skip reads that should not count: not aligned anywhere, flagged as PCR duplicates, secondary
-	// (alternative) alignments of a read, or with no alignment recipe (CIGAR) to measure.
-	if rec.Flags&(sam.Unmapped|sam.Duplicate|sam.Secondary) != 0 || len(rec.Cigar) == 0 {
-		return nil
+	place, err := t.split.Place(rec)
+	if err != nil {
+		return err
 	}
-
-	// Moving to a new chromosome ends everything in progress: print all molecules and start fresh.
-	chrom := rec.Ref.Name()
-	if t.lastContig != "" && chrom != t.lastContig {
-		t.flushAll()
-		t.lastPos = 0
-	}
-	t.lastContig = chrom
-
-	// The file must be in left-to-right order within each chromosome.
-	if rec.Pos < t.lastPos {
-		return ErrNotSorted
-	}
-	t.lastPos = rec.Pos
-
-	// Work out the read's barcode and whether it is valid (see StatsXam for the rules).
-	bx, valid := xam.FindBarcode(rec)
-
-	if rec.Flags&sam.Supplementary != 0 {
-		if m := t.molecules[bx]; m != nil && bx != "" {
+	switch place.Kind {
+	case deconvolve.Supplementary:
+		// Credit the extra piece to its barcode's open molecule, if it has one.
+		if m := t.molecules[place.Barcode]; m != nil && place.Barcode != "" {
 			m.addSupplementary(rec)
 		}
-		return nil // supplementary pieces never start molecules, so we are done with this record
-	}
-
-	if bx == "" || !valid {
+	case deconvolve.NoBarcode:
 		if t.invalid == nil {
 			t.invalid = &invalidPool{}
 		}
 		t.invalid.add(rec)
-		return nil
+	case deconvolve.Primary:
+		m := t.molecules[place.Barcode]
+		if m == nil { // first read of this molecule: start its tally, named after the barcode (plus -1, -2, ... after the first)
+			m = &molecule{name: place.Barcode}
+			if place.Molecule > 0 {
+				m.name += "-" + strconv.Itoa(place.Molecule)
+			}
+			t.molecules[place.Barcode] = m
+		}
+		m.add(rec)
 	}
-
-	m := t.molecules[bx]
-	if m == nil { // first time we see this barcode here: start following it
-		m = &molecule{name: bx}
-		t.molecules[bx] = m
-	}
-	m.add(rec)
-	return nil
+	return nil // skipped, duplicate and secondary records do not count
 }
 
-// flushAll prints every molecule and resets the state, used at the end of each chromosome and at
-// the end of the file.
+// closeMolecule prints the open molecule of a barcode and forgets it.
+func (t *tracker) closeMolecule(barcode string) {
+	if m := t.molecules[barcode]; m != nil {
+		t.write(m)
+		delete(t.molecules, barcode)
+	}
+}
+
+// flushAll prints every molecule still open and the pooled invalid reads, used at the end of each chromosome.
 func (t *tracker) flushAll() {
 	if t.invalid != nil {
 		t.write(t.invalid.asMolecule())
