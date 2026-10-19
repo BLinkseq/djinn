@@ -1,4 +1,4 @@
-name: Release Versioned Tarball
+name: Release Versioned Binaries
 
 on:
   push:
@@ -6,26 +6,32 @@ on:
     - '*' # Push events of any tag created
 
 jobs:
-  build_tarball:
-    name: Upload Release Tarball
+  build_release:
+    name: Upload Release Binaries
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
-      repository-projects: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Bump Djinn Version
-        run: |
-          sed -i "s/0\.0\.0/${{ github.ref_name }}/g" djinn/__main__.py
-          sed -i "s/0\.0\.0/${{ github.ref_name }}/g" pyproject.toml         
-      - name: Build project
-        # This builds the release tarball, stripped of unneccessary things
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build binaries
         run: |
           mkdir artifacts
-          tar --exclude="test" --exclude=".deprecated" --exclude="resources" --exclude="artifacts" --exclude=".git" --exclude=".github" -zcvf artifacts/djinn.${{ github.ref_name }}.tar.gz .
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
+            os=${target%/*}; arch=${target#*/}
+            dir=djinn.${{ github.ref_name }}.$os-$arch
+            mkdir -p $dir
+            GOOS=$os GOARCH=$arch CGO_ENABLED=0 go build \
+              -ldflags "-X github.com/blinkseq/djinn/cmd.VERSION=${{ github.ref_name }} -s -w" \
+              -o $dir/djinn .
+            cp LICENSE README.md $dir/
+            tar -zcvf artifacts/$dir.tar.gz $dir
+          done
       - name: Create Release with Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: ./artifacts/djinn.${{ github.ref_name }}.tar.gz
+          files: ./artifacts/*.tar.gz

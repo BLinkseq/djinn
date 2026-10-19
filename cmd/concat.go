@@ -33,9 +33,6 @@ var concatXamCmd = &cobra.Command{
 				return err
 			}
 		}
-		if _, err := cmd.Flags().GetString("tmp-prefix"); err != nil {
-			return err
-		}
 		if _, err := cmd.Flags().GetBool("sam"); err != nil {
 			return err
 		}
