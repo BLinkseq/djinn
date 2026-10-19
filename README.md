@@ -16,7 +16,9 @@ Sort records by barcode rather than name or position
 `djinn sam stats` summarizes each molecule of a coordinate-sorted SAM/BAM file: number of reads, start, end,
 inferred length, aligned bp, inferred insert length and coverage. Reads that share a barcode can be split into
 separate molecules with `--distance-threshold`. A barcode is valid when its `VX` tag says so, or, when there is
-no `VX` tag, when the barcode itself is valid.
+no `VX` tag, when the barcode itself is valid. `djinn fq stats` does the same kind of summary for a FASTQ file:
+reads, reads with a barcode, valid and invalid barcodes, and how many barcodes were bad at each position
+(haplotagging segment `A00`, stLFR part `0`, TELLseq base `N`).
 
 ## Filtering
 - separate linked reads from singletons
@@ -52,7 +54,7 @@ This is **extremely experimental** and it converts a paired-end linked-read fast
 | [x] | [x] | filter-singletons |   
 | [x] | [x] | ncbi              | 
 | [x] | [x] | sample            |               
-|     | [x] | stats             |
+| [x] | [x] | stats             |
 | [ ] | [x] | sort              |             
 | [x] | [x] | standardize       | 
 | [ ] | [ ] | concat            |

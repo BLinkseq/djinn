@@ -44,3 +44,45 @@ func TestStatsXamArgs(t *testing.T) {
 		}
 	})
 }
+
+func TestStatsFqArgs(t *testing.T) {
+	dir := t.TempDir()
+	valid := makeReadableFile(t, dir, "in.fq")
+
+	t.Run("no args", func(t *testing.T) {
+		if err := statsFqCmd.Args(statsFqCmd, []string{}); err == nil {
+			t.Errorf("expected error with no args")
+		}
+	})
+	t.Run("too many args", func(t *testing.T) {
+		if err := statsFqCmd.Args(statsFqCmd, []string{valid, valid}); err == nil {
+			t.Errorf("expected error with too many args")
+		}
+	})
+	t.Run("nonexistent input file", func(t *testing.T) {
+		if err := statsFqCmd.Args(statsFqCmd, []string{filepath.Join(dir, "missing.fq")}); err == nil {
+			t.Errorf("expected error for missing input file")
+		}
+	})
+	t.Run("valid input file, platform detected", func(t *testing.T) {
+		if err := statsFqCmd.Args(statsFqCmd, []string{valid}); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+	for _, platform := range []string{"haplotagging", "stlfr", "tellseq", "StLFR", "TELLSEQ"} {
+		t.Run("platform "+platform, func(t *testing.T) {
+			setStringFlag(t, statsFqCmd.Flags(), "platform", platform)
+			defer setStringFlag(t, statsFqCmd.Flags(), "platform", "")
+			if err := statsFqCmd.Args(statsFqCmd, []string{valid}); err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+	t.Run("unknown platform", func(t *testing.T) {
+		setStringFlag(t, statsFqCmd.Flags(), "platform", "10x")
+		defer setStringFlag(t, statsFqCmd.Flags(), "platform", "")
+		if err := statsFqCmd.Args(statsFqCmd, []string{valid}); err == nil {
+			t.Errorf("expected error for an unknown platform")
+		}
+	})
+}

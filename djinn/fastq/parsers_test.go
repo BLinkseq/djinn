@@ -62,6 +62,27 @@ func TestCoreFqParser_Tellseq(t *testing.T) {
 	}
 }
 
+// stLFR and TELLseq read names usually carry an old-style "/1" or "/2" after the barcode, and the
+// paired-end marker can instead live in the description (new style); both must still be detected.
+func TestCoreFqParser_DetectsThroughPairedEndMarkers(t *testing.T) {
+	for _, c := range []struct {
+		name, want string
+		lines      []string
+	}{
+		{"stlfr /1", "stlfr", []string{"@read1#123_456_789/1", "ACGT", "+", "IIII"}},
+		{"stlfr /2", "stlfr", []string{"@read1#123_456_789/2", "ACGT", "+", "IIII"}},
+		{"stlfr new style", "stlfr", []string{"@read1#123_456_789 1:N:0:ATCG", "ACGT", "+", "IIII"}},
+		{"tellseq /1", "tellseq", []string{"@read1:ATCGATCG/1", "ACGT", "+", "IIII"}},
+		{"tellseq new style", "tellseq", []string{"@read1:ATCGATCG 2:Y:18:ATCG", "ACGT", "+", "IIII"}},
+		{"haplotagging new style", "haplotagging", []string{"@read1 1:N:0:ATCG\tBX:Z:A01C02B03D04", "ACGT", "+", "IIII"}},
+	} {
+		_, got, err := CoreFqParser(writeFastqFile(t, c.lines...))
+		if err != nil || got != c.want {
+			t.Errorf("%s: detected %q (err %v), want %q", c.name, got, err, c.want)
+		}
+	}
+}
+
 func TestCoreFqParser_MixedFormatsIsError(t *testing.T) {
 	path := writeFastqFile(t,
 		"@read1 BX:Z:A01C02B03D04", "ACGT", "+", "IIII",

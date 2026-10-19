@@ -31,16 +31,20 @@ func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), st
 			}
 			return nil, "", fmt.Errorf("reading %v, record %v: %w", fq, i, err)
 		}
+		// Take the paired-end marker (a "/1" or "/2" on the ID, or "1:N:0:ATCG" in the description) out
+		// first, as the record parsers do. A barcode ends the ID, so with "/1" still attached
+		// (the usual stLFR style: ...#12_34_56/1) it would never be found.
+		id, desc, _ := splitCASAVA(rec.ID, rec.Desc)
 		// is there a BX tag in the comments/description?
-		if _, _, _, _, found := findField(rec.Desc, BXTAG); found {
+		if _, _, _, _, found := findField(desc, BXTAG); found {
 			h += 1
 		}
 		// if not, look for tellseq
-		if _, _, _, found := findTellseqBarcode(rec.ID); found {
+		if _, _, _, found := findTellseqBarcode(id); found {
 			t += 1
 		}
 		// if not, look for stlfr
-		if _, _, _, found := findStlfrBarcode(rec.ID); found {
+		if _, _, _, found := findStlfrBarcode(id); found {
 			s += 1
 		}
 		totalReads += 1
