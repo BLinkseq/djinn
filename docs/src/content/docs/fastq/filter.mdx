@@ -1,0 +1,49 @@
+---
+title: Remove singletons or invalid barcodes
+sidebar:
+  order: 4
+  label: filter
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+You may be interested in retaining only "useful" linked reads, that is, reads with a valid barcode or reads
+that are not singletons (i.e. there are more than 2 reads with the same barcode). Like their names suggests, [!badge corners="pill" text="filter-invalid"]() will remove invalid barcodes and [!badge corners="pill" text="filter-singletons"]() will remove singletons.
+Each of these commands can optionally retain the removed reads in separate files.
+
+
+### filter-invalid
+
+```bash usage
+djinn fastq filter-invalid [--invalid] PREFIX INPUTS...
+```
+
+```bash example | remove invalid barcodes and retain them in separate files
+djinn fastq filter-invalid --invalid echidna_valid echidna.R1.fq.gz echidna.R2.fq.gz
+```
+
+#### Running Options
+| argument   | description                                                     |
+|:------------------|:------------------------------------------------------------------------------|
+| `PREFIX`          | <Badge text="required" variant="tip" /> output filename prefix                |
+| `INPUTS`          | <Badge text="required" variant="tip" /> FASTQ or file pair                    |
+| `-c` `--cache-size` [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `10000`) |
+| `-i` `--invalid` | write reads with invalid barcodes to `prefix.invalid.bam` or `prefix.invalid.R[12].fq.gz` |
+
+### filter-singletons
+
+```bash usage
+djinn fastq filter-singletons [--singletons] PREFIX INPUT...
+```
+
+```bash example | remove singleton barcodes and retain them in separate files
+djinn fastq filter-singletons --singletons hyena_filt hyena.R1.fq.gz hyena.R2.fq.gz
+```
+
+#### :icon-terminal: Running Options
+| argument          | description                                                                   |
+|:------------------|:------------------------------------------------------------------------------|
+| `PREFIX`          | <Badge text="required" variant="tip" /> output filename prefix                |
+| `INPUT`          | <Badge text="required" variant="tip" /> FASTQ file or file pair                |
+| `-c` `--cache-size` | [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `10000`) |
+| `-s` `--singletons` | write reads with singleton barcodes to `prefix.singletons.R[12].fq.gz` |

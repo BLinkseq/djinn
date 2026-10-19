@@ -1,0 +1,20 @@
+---
+title: Count linked-read barcodes
+sidebar:
+  order: 4
+  label: count
+---
+
+You might want a table of the counts (frequency) of all the unique barcodes in your data and that's what
+is for. Records with missing barcodes are ignored.
+
+You can use one file of a pair (e.g. R1 or R2), but including both files will prioritize counting the first file
+and only count occurences of _new_ barcodes in the second file that aren't present in the first file. This is done
+to avoid double-counting barcodes.
+```bash usage
+djinn fastq count INPUT...
+```
+
+```bash example 
+djinn fastq count sample1.F.fq.gz sample1.R.fq.gz > sample1.bxcount
+```

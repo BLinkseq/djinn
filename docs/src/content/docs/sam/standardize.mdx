@@ -1,0 +1,39 @@
+---
+title: Convert SAM to Standard format
+sidebar:
+  order: 4
+  label: standardize
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+In the effort of making it painless to have your data in the preferred standard format, use `standardize`
+to quickly standardize FASTQ and BAM files (i.e. convert them to the [Standard linked-read data format](https://blinkseq.github.io/lastq/)).
+By default, standardization just moves the barcode (wherever it may be)
+into a `BX:Z` SAM tag as-is and does a technology-appropriate validation of the barcode value, which it writes to the
+`VX:i` tag. However, you can use `--style` to also convert the barcode style between formats. Keep in mind that each
+barcode style has a different upper limit as to how many unique barcodes it can support, which may prevent successful conversions.
+The styles are given as:
+
+
+| Style          | Maximum Unique | What they look like | Example            |
+|:---------------|:--------------:|:--------------------|:-------------------|
+| `haplotagging` |     $96^4$     | AxxCxxBxxDxx        | A41C22B70D93       |
+| `stlfr`        |    $1537^3$    | 1_2_3               | 901_3_1121         |
+| `tellseq`      |    $4^{18}$    | 18-base nucleotide  | AGCCATGTACGTATGGTA |
+| `10X`          |    $4^{16}$    | 16-base nucleotide  | GGCTGAACACGTGCAG   |
+
+
+If barcodes are present in the sequence name (stlfr, tellseq), this method moves the barcode to the `BX:Z`
+tag of the alignment, maintaining the same barcode style by default (auto-detected). If moved to or already in a `BX:Z` tag,
+will then write a complementary `VX:i` tag to describe barcode validation `0` (invalid) or `1` (valid).
+Use `--style` to also convert the barcode to a different style (`haplotagging`, `stlfr`, `tellseq`, `10X`),
+which also writes a `conversion.bc` file to the working directory mapping the barcode conversions. Writes to `stdout`.
+
+```bash usage
+djinn standardize [--style] PREFIX INPUTS
+```
+
+```bash example | standardize a bam and change the barcodes to stLFR style
+djinn standardize-bam --style stflr yucca.bam > yucca.std.stlfr.bam
+```

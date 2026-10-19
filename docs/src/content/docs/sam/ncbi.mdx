@@ -1,0 +1,31 @@
+---
+title: Convert after NCBI retrieval
+sidebar:
+  order: 4
+  label: ncbi
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+When submitting sequences to NCBI, [they reformat the read headers](https://www.ncbi.nlm.nih.gov/sra/docs/sra-data-formats/),
+which means any useful information in the read headers disappears. This applies to haplotagging, TELLseq, and stLFR FASTQ
+formats, where the barcode is encoded in the sequence header, and thus vanishes from the public archive when uploaded to
+NCBI. Obviously this isn't great, so we propose a simple approach to solving this problem: uploading sequence data as
+unaligned BAM files (recommended).
+
+The reverse of this process is to convert to FASTQ from SAM/BAM.
+
+```bash losslessly convert to fastq from unaligned BAM
+djinn sam ncbi PREFIX infile.bam
+
+# is equivalent to #
+samtools fastq -N -c 6 -T "*" -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz infile.bam
+```
+
+## Running Options
+
+| argument          | description                                                                   |
+|:------------------|:------------------------------------------------------------------------------|
+| `INPUT`           | <Badge text="required" variant="tip" /> SAM/BAM file            |
+| `PREFIX`          | <Badge text="required" variant="tip" /> output filename prefix                |
+| `-t` `--threads`  | Number of threads to use (default: 4)                                         |

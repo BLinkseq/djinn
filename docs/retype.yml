@@ -1,0 +1,55 @@
+start:
+  pro: true
+nav:
+  mode: stack
+input: .
+output: .retype
+url: blinkseq.github.io/djinn/
+meta:
+  title: " | Djinn"
+showSidebarFilter: false
+theme:
+  base:
+    base-link-weight: 500
+    nav-item-text-active-weight: 700
+    image-rounded: 0.75rem
+    nav-item-text-stack: "#1e66f5"
+branding:
+  label: 2.5
+  logo: static/djinn.png
+  logoDark: static/djinn.png
+  logoAlign: left
+favicon: static/favicon.png
+search:
+  mode: partial
+edit:
+  repo: "https://github.com/blinkseq/djinn/edit"
+  base: /
+  branch: "docs"
+links:
+  - text: BLink-Seq
+    link: https://blinkseq.github.io/
+    icon: https://blinkseq.github.io/_astro/logo.DGThwx8R_1NHPA4.webp
+    target: blank
+  - text: Source
+    link: https://github.com/blinkseq/djinn
+    icon: mark-github
+    target: blank
+footer:
+  copyright: |
+      This work is a collaboration between the lab of Nina Therkildsen and the Cornell Genomics Innovation Hub.
+
+      &copy; Copyright {{ year }}. All rights reserved.
+  links:
+  - text: Therkildsen Lab
+    link: https://www.therkildsenlab.org/
+    icon: https://www.therkildsenlab.org/uploads/1/4/5/5/145548022/published/new-logo-smaller.png
+    target: blank
+  - text: Cornell GIH
+    link: https://www.genomicsinnovation.cornell.edu/
+    icon: https://raw.githubusercontent.com/pdimens/harpy/refs/heads/main/docs/static/biotech.png
+    target: blank
+exclude:
+  - "test/"
+  - "djinn/"
+  - "resources/"
