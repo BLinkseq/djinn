@@ -8,12 +8,15 @@
 // alignment file once, from the start of each chromosome to its end, and for every
 // barcode it keeps a running tally of its reads: how many, where the first one
 // starts, where the furthest one ends, how many bases lined up, and so on. When a
-// molecule is complete it prints one line of the table and forgets it.
+// chromosome is finished it prints one line of the table per barcode and forgets them.
+//
+// Each barcode is taken as one molecule. If the same barcode came from several molecules, first
+// separate them with `djinn sam deconvolve`, which numbers them (ACGT, ACGT-1, ACGT-2, ...); this
+// package then reports each numbered barcode as a molecule of its own.
 package stats
 
 import (
 	"bufio"
-	"container/heap"
 	"errors"
 	"io"
 	"os"
@@ -38,11 +41,10 @@ var ErrNotSorted = errors.New("input alignment file does not appear to be coordi
 // Records are grouped by barcode, found with xam.FindBarcode: the BX tag, or a TELLseq/stLFR
 // style barcode in the read name. A barcode is valid when the VX tag says so, or, with no VX tag,
 // when the barcode itself is valid. Reads without a valid barcode are pooled into one "invalid"
-// line per contig. Reads sharing a barcode are split into separate molecules (BARCODE-1, ...) when
-// the gap between consecutive reads exceeds distance; distance 0 never splits.
+// line per contig.
 //
 // The input must be coordinate sorted. Molecules written before a sorting error are still output.
-func StatsXam(infile string, distance, threads int) error {
+func StatsXam(infile string, threads int) error {
 	infile = xam.FileOrStdin(infile) // "" means "read from a pipe", so this decides file vs. stdin
 
 	// A background worker reads the file and hands us records through a channel (a conveyor belt).
@@ -54,7 +56,7 @@ func StatsXam(infile string, distance, threads int) error {
 	out := bufio.NewWriterSize(os.Stdout, xam.IoBuf)
 	_, _ = out.WriteString(header) // (see above: errors are reported by Flush)
 
-	runErr := run(recChan, out, distance)
+	runErr := run(recChan, out)
 	if runErr != nil {
 		// We stopped early, so the reader may still be holding unread records. Let it finish up in the
 		// background instead of leaving it stuck waiting for us to take the next one.
@@ -70,126 +72,57 @@ func StatsXam(infile string, distance, threads int) error {
 }
 
 // run reads every record from recs and writes the molecule table to w.
-func run(recs <-chan *sam.Record, w io.Writer, distance int) error {
-	t := newTracker(w, distance)
+func run(recs <-chan *sam.Record, w io.Writer) error {
+	t := newTracker(w)
 	for rec := range recs {
 		if err := t.process(rec); err != nil {
 			return err
 		}
 	}
-	t.flushAll() // end of the file: print whatever molecules are still open
+	t.flushAll() // end of the file: print whatever is still open
 	return nil
 }
 
-// ── what a finished molecule looks like ───────────────────────────────────────
+// ── what a molecule looks like ────────────────────────────────────────────────
 
-// molecule is the running tally for one molecule: a handful of counters that are
-// updated as each of its reads is seen, so we never need to keep the reads themselves.
+// molecule is the running tally for one barcode on one chromosome: a handful of counters that
+// are updated as each of its reads is seen, so we never need to keep the reads themselves.
 type molecule struct {
-	start, end int // where the molecule begins, and the furthest point any of its reads reaches
-	lastEnd    int // where the most recent read ended (used to measure the gap to the next read)
-	bp, insert int // total bases that lined up, and total length of the DNA fragments the reads came from
-	count      int // number of reads (a read pair counts once)
+	chrom, name string // the chromosome and the barcode this tally is printed under
+	start, end  int    // where the molecule begins, and the furthest point any of its reads reaches
+	bp, insert  int    // total bases that lined up, and total length of the DNA fragments the reads came from
+	count       int    // number of reads (a read pair counts once)
+	started     bool   // false until the first read arrives
 }
 
-// finishedMolecule is a completed molecule together with the label it is printed under.
-type finishedMolecule struct {
-	chrom, name string // the chromosome, and the barcode (with -1, -2, ... for later molecules)
-	molecule
-}
-
-// ── one barcode's state ───────────────────────────────────────────────────────
-
-// readCloud follows a single barcode. Because the file is sorted, a barcode's reads arrive in
-// left-to-right order, so we can tell when one molecule ends and the next begins just by looking
-// at the gap between consecutive reads. Only one molecule per barcode is ever held at a time.
-type readCloud struct {
-	barcode string
-	chrom   string
-	suffix  int      // 0 for the first molecule of this barcode, then 1, 2, ... for later ones
-	cutoff  int      // a gap bigger than this starts a new molecule (0 = never split)
-	mol     molecule // the molecule being built right now
-	open    bool     // false until the first read arrives, and again after the molecule is printed
-}
-
-// add takes one ordinary (primary) read. If this read starts a new molecule, the previous
-// one is complete and is returned (second result true) so the caller can print it.
-func (c *readCloud) add(r *sam.Record) (done finishedMolecule, finished bool) {
-	c.chrom = r.Ref.Name()
-	// A fresh molecule built from just this read. It is used if this read starts a new molecule.
-	start, end := r.Pos, alignedEnd(r)
-	fresh := molecule{
-		start: start, end: end, lastEnd: end,
-		bp: alignedLength(r), insert: insertSize(r), count: readCount(r),
+// add takes one ordinary (primary) read into the tally.
+func (m *molecule) add(r *sam.Record) {
+	end := xam.AlignedEnd(r)
+	if !m.started {
+		m.start, m.end, m.started = r.Pos, end, true // the first read fixes where the molecule begins
+	} else {
+		m.end = max(m.end, end) // the molecule reaches as far right as its furthest read
 	}
-
-	switch {
-	case !c.open:
-		// First read of this barcode on this stretch: start a molecule.
-		c.mol, c.open = fresh, true
-
-	case c.cutoff > 0 && start-c.mol.lastEnd > c.cutoff:
-		// The gap since the previous read is too big: this read belongs to a different molecule that
-		// happens to carry the same barcode. Hand back the old molecule and start a new one.
-		done, finished = c.finish(), true
-		c.suffix++
-		c.mol = fresh
-
-	default:
-		// Same molecule: fold this read into the running tally.
-		c.mol.end = max(c.mol.end, end) // the molecule reaches as far right as its furthest read
-		c.mol.lastEnd = end             // remember where this read ended, for measuring the next gap
-		c.mol.bp += fresh.bp
-		c.mol.insert += fresh.insert
-		c.mol.count += fresh.count
-	}
-	return done, finished
+	m.chrom = r.Ref.Name()
+	m.bp += alignedLength(r)
+	m.insert += insertSize(r)
+	m.count += readCount(r)
 }
 
 // addSupplementary handles a "supplementary" alignment: an extra piece of a read that was already
 // counted (for example a read that spans a rearrangement and so lines up in two places). We credit
-// its bases to the open molecule but leave the read count and the gap measurement untouched, so
-// it can neither inflate the read count nor cause a split. If the barcode has no open molecule
-// yet, there is nothing to credit and it is ignored.
-func (c *readCloud) addSupplementary(r *sam.Record) {
-	if c.open {
-		c.mol.bp += alignedLength(r)
-		c.mol.insert += insertSize(r)
+// its bases to the molecule but leave the read count and its extent untouched. If the barcode has no
+// molecule yet there is nothing to credit and it is ignored.
+func (m *molecule) addSupplementary(r *sam.Record) {
+	if m.started {
+		m.bp += alignedLength(r)
+		m.insert += insertSize(r)
 	}
 }
 
-// flush closes the open molecule (if any) and returns it for printing.
-func (c *readCloud) flush() (done finishedMolecule, finished bool) {
-	if !c.open {
-		return done, false
-	}
-	c.open = false
-	return c.finish(), true
-}
-
-// finish labels the molecule being built: the barcode, plus "-1", "-2", ... after the first one.
-func (c *readCloud) finish() finishedMolecule {
-	name := c.barcode
-	if c.suffix != 0 {
-		name += "-" + strconv.Itoa(c.suffix)
-	}
-	return finishedMolecule{chrom: c.chrom, name: name, molecule: c.mol}
-}
-
-// lastEnd is where this barcode's most recent read ended (0 if nothing is open). It is the key
-// the "deadline list" below is ordered by.
-func (c *readCloud) lastEnd() int {
-	if !c.open {
-		return 0
-	}
-	return c.mol.lastEnd
-}
-
-// ── reads without a usable barcode ────────────────────────────────────────────
-
-// invalidPool collects every read that has no valid barcode. They cannot be told apart, so
-// they are not split into molecules: each chromosome gets a single "invalid" line that just
-// totals their reads and aligned bases.
+// invalidPool collects every read that has no valid barcode. They cannot be told apart, so they are not
+// treated as a molecule: each chromosome gets a single "invalid" line that just totals their reads and
+// aligned bases (and shows no start, end or insert).
 type invalidPool struct {
 	chrom     string
 	bp, reads int
@@ -201,8 +134,8 @@ func (p *invalidPool) add(r *sam.Record) {
 	p.reads += readCount(r)
 }
 
-func (p *invalidPool) finished() finishedMolecule {
-	return finishedMolecule{chrom: p.chrom, name: "invalid", molecule: molecule{bp: p.bp, count: p.reads}}
+func (p *invalidPool) asMolecule() *molecule {
+	return &molecule{chrom: p.chrom, name: "invalid", bp: p.bp, count: p.reads}
 }
 
 // readCount is how many reads this record adds to a molecule's read count. A paired read
@@ -214,93 +147,22 @@ func readCount(r *sam.Record) int {
 	return 0
 }
 
-// ── the deadline list (a heap) ────────────────────────────────────────────────
-//
-// The problem: a barcode's molecule is only finished once we know no more of its reads are
-// coming, and we can only know that by noticing that the file has moved far past it. Waiting
-// until the end of the chromosome would mean holding every barcode in memory the whole time.
-//
-// The idea: keep a to-do list of barcodes, ordered by "whose most recent read ended furthest
-// to the left". That barcode is the one closest to being finished. Each time we move to a new
-// read, we only need to look at the top of the list: if the file has moved more than
-// `distance` bases past the top barcode's last read, its molecule is complete (any later read
-// would have been too far away to join it anyway), so we print it, drop it from memory, and
-// check the next barcode on the list. If the top barcode is not overdue, none of the others
-// are either, because the list is ordered, so we stop looking immediately.
-//
-// A "heap" is the standard tool for such a list: it always hands back the smallest item
-// first, and adding or removing an item is quick (it does not re-sort everything). Go's
-// container/heap does the work, as long as we teach it five small things about our list:
-// how long it is, which of two entries comes first, how to swap two entries, and how to add
-// and remove the last one.
-//
-// One subtlety: when a barcode gets another read, its position in the list should change, but
-// a heap cannot cheaply edit an item in the middle. So we do not edit: we add a new entry
-// with the barcode's new position and leave the old entry where it is. The old entry is now
-// "stale" (out of date). When a stale entry reaches the top, we notice it no longer matches
-// the barcode's real position and simply throw it away. This trick is called lazy deletion.
-
-// evictEntry is one line on the deadline list: a barcode and where its latest read ended
-// at the moment the line was written.
-type evictEntry struct {
-	end int
-	bx  string
-}
-
-// evictHeap is the deadline list. It lists the entries in an order where the entry with the
-// smallest `end` (the one furthest left) is always first.
-type evictHeap []evictEntry
-
-func (h evictHeap) Len() int { return len(h) } // how many entries there are
-
-// Less says which of two entries goes first: the one whose read ended further left. If they
-// tie, the barcode name breaks the tie, so the order is always predictable.
-func (h evictHeap) Less(i, j int) bool {
-	return h[i].end < h[j].end || (h[i].end == h[j].end && h[i].bx < h[j].bx)
-}
-
-func (h evictHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] } // exchange two entries' places
-
-// Push and Pop are called by container/heap, not by us directly: heap.Push(&h, x) puts x at
-// the end and then shuffles it up into its right place, and heap.Pop(&h) moves the first entry
-// to the end, re-orders the rest, and then calls Pop to cut the last one off and return it.
-func (h *evictHeap) Push(x any) { *h = append(*h, x.(evictEntry)) }
-func (h *evictHeap) Pop() any {
-	old := *h
-	last := old[len(old)-1]
-	*h = old[:len(old)-1]
-	return last
-}
-
 // ── the tracker: everything that changes while we scan the file ───────────────
 
 // tracker holds the state of one pass through the file and decides what to do with each read.
 type tracker struct {
-	w        io.Writer
-	line     []byte // scratch space reused for each output line, so printing does not allocate each time
-	distance int    // the gap (in bases) that splits a barcode's reads into separate molecules; 0 = never
+	w    io.Writer
+	line []byte // scratch space reused for each output line, so printing does not allocate each time
 
-	clouds  map[string]*readCloud // every barcode currently being followed, by barcode
-	invalid *invalidPool          // reads without a valid barcode, on the current chromosome
-
-	// If a barcode is closed early and then shows up again further along the same chromosome, it
-	// must carry on numbering (BARCODE-1, -2, ...) rather than restart. This remembers the next
-	// number for each such barcode.
-	suffixNext map[string]int
-
-	deadlines evictHeap // the deadline list described above
+	molecules map[string]*molecule // every barcode being followed on the current chromosome
+	invalid   *invalidPool         // reads without a valid barcode on the current chromosome, pooled together
 
 	lastContig string // the chromosome of the previous read
 	lastPos    int    // where the previous read started, to check the file really is sorted
 }
 
-func newTracker(w io.Writer, distance int) *tracker {
-	return &tracker{
-		w:          w,
-		distance:   distance,
-		clouds:     map[string]*readCloud{},
-		suffixNext: map[string]int{},
-	}
+func newTracker(w io.Writer) *tracker {
+	return &tracker{w: w, molecules: map[string]*molecule{}}
 }
 
 // process deals with one record from the file.
@@ -311,7 +173,7 @@ func (t *tracker) process(rec *sam.Record) error {
 		return nil
 	}
 
-	// Moving to a new chromosome ends everything in progress: print all open molecules and start fresh.
+	// Moving to a new chromosome ends everything in progress: print all molecules and start fresh.
 	chrom := rec.Ref.Name()
 	if t.lastContig != "" && chrom != t.lastContig {
 		t.flushAll()
@@ -329,13 +191,11 @@ func (t *tracker) process(rec *sam.Record) error {
 	bx, valid := xam.FindBarcode(rec)
 
 	if rec.Flags&sam.Supplementary != 0 {
-		if c := t.clouds[bx]; c != nil && bx != "" {
-			c.addSupplementary(rec)
+		if m := t.molecules[bx]; m != nil && bx != "" {
+			m.addSupplementary(rec)
 		}
 		return nil // supplementary pieces never start molecules, so we are done with this record
 	}
-
-	t.closeOverdue(rec.Pos) // first, print any molecule the file has moved too far past
 
 	if bx == "" || !valid {
 		if t.invalid == nil {
@@ -344,91 +204,51 @@ func (t *tracker) process(rec *sam.Record) error {
 		t.invalid.add(rec)
 		return nil
 	}
-	t.addPrimary(rec, chrom, bx)
+
+	m := t.molecules[bx]
+	if m == nil { // first time we see this barcode here: start following it
+		m = &molecule{name: bx}
+		t.molecules[bx] = m
+	}
+	m.add(rec)
 	return nil
 }
 
-// addPrimary adds an ordinary read with a valid barcode to that barcode's molecule.
-func (t *tracker) addPrimary(rec *sam.Record, chrom, bx string) {
-	c := t.clouds[bx]
-	if c == nil { // first time we see this barcode here: start following it
-		c = &readCloud{barcode: bx, chrom: chrom, suffix: t.suffixNext[bx], cutoff: t.distance}
-		t.clouds[bx] = c
-	}
-	if done, finished := c.add(rec); finished {
-		t.write(done)
-	}
-	if t.distance > 0 {
-		// The barcode's latest read now ends somewhere new, so add a fresh line to the deadline list.
-		// (The barcode's older line is left behind as a stale entry; see the heap notes above.)
-		heap.Push(&t.deadlines, evictEntry{end: c.lastEnd(), bx: bx})
-	}
-}
-
-// closeOverdue prints and forgets every barcode whose latest read ended more than `distance`
-// bases before `pos`, the place the scan has now reached. Such a barcode cannot gain another
-// read in its current molecule, so keeping it in memory any longer would be wasted effort.
-func (t *tracker) closeOverdue(pos int) {
-	// Only look at the front of the deadline list: it holds the barcode closest to being overdue.
-	for t.distance > 0 && len(t.deadlines) > 0 && t.deadlines[0].end+t.distance < pos {
-		entry := heap.Pop(&t.deadlines).(evictEntry) // take the front entry off the list
-		c := t.clouds[entry.bx]
-
-		// Is this entry stale? The barcode may be gone already, or it may have received a newer read
-		// since this entry was written (so a newer, further-right entry for it is still on the list).
-		// Either way this old entry is out of date, so discard it and move on.
-		if c == nil || c.lastEnd() > entry.end {
-			continue
-		}
-
-		// The entry is current and overdue: print the molecule and stop following the barcode.
-		if done, finished := c.flush(); finished {
-			t.write(done)
-		}
-		t.suffixNext[entry.bx] = c.suffix + 1 // if the barcode returns later, number the next molecule onward
-		delete(t.clouds, entry.bx)
-	}
-}
-
-// flushAll prints every molecule still open and resets the state, used at the end of each
-// chromosome and at the end of the file.
+// flushAll prints every molecule and resets the state, used at the end of each chromosome and at
+// the end of the file.
 func (t *tracker) flushAll() {
 	if t.invalid != nil {
-		t.write(t.invalid.finished())
+		t.write(t.invalid.asMolecule())
 		t.invalid = nil
 	}
-	for _, c := range t.clouds {
-		if done, finished := c.flush(); finished {
-			t.write(done)
-		}
+	for _, m := range t.molecules {
+		t.write(m)
 	}
-	clear(t.clouds)
-	t.deadlines = t.deadlines[:0] // the deadline list is for one chromosome only
-	clear(t.suffixNext)
+	clear(t.molecules)
 }
 
-// write prints one finished molecule as a line of the output table.
-func (t *tracker) write(f finishedMolecule) {
-	t.line = appendLine(t.line[:0], f) // rebuild the line in the reusable scratch space
+// write prints one molecule as a line of the output table.
+func (t *tracker) write(m *molecule) {
+	t.line = appendLine(t.line[:0], m) // rebuild the line in the reusable scratch space
 	_, _ = t.w.Write(t.line)           // the buffered writer reports any error when it is flushed
 }
 
-// appendLine adds the tab-separated output line for f to dst. Building the line with strconv's
+// appendLine adds the tab-separated output line for m to dst. Building the line with strconv's
 // append functions (instead of fmt) avoids creating temporary strings for every number.
-func appendLine(dst []byte, f finishedMolecule) []byte {
-	inferred := f.end - f.start // the molecule's length as seen from where its reads landed
+func appendLine(dst []byte, m *molecule) []byte {
+	inferred := m.end - m.start // the molecule's length as seen from where its reads landed
 
 	// Coverage: the fraction of the inferred length actually backed by aligned bases (or by fragment
 	// length), capped at 1. An empty molecule (length 0) has no meaningful fraction, so it is 0.
 	var covBP, covInsert float64
 	if inferred != 0 {
-		covBP, covInsert = coverage(f.bp, inferred), coverage(f.insert, inferred)
+		covBP, covInsert = coverage(m.bp, inferred), coverage(m.insert, inferred)
 	}
 
-	dst = append(dst, f.chrom...)
+	dst = append(dst, m.chrom...)
 	dst = append(dst, '\t')
-	dst = append(dst, f.name...)
-	for _, n := range [...]int{max(1, f.count), f.start, f.end, inferred, f.bp, f.insert} {
+	dst = append(dst, m.name...)
+	for _, n := range [...]int{max(1, m.count), m.start, m.end, inferred, m.bp, m.insert} {
 		dst = append(dst, '\t')
 		dst = strconv.AppendInt(dst, int64(n), 10)
 	}

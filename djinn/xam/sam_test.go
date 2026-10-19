@@ -317,3 +317,19 @@ func TestPairedFlag(t *testing.T) {
 		t.Errorf("PairedFlag(false) = %d, want 141", got)
 	}
 }
+
+func TestAlignedEnd(t *testing.T) {
+	for cigar, want := range map[string]int{
+		"100M": 110, "5S95M": 105, "30M5D70M": 115, "40M300N60M": 410, "50=2X48=": 110,
+		"8H3S40M2S4H": 50, "10I": 11, // no reference consumed: htslib counts one base
+	} {
+		c, err := sam.ParseCigar([]byte(cigar))
+		if err != nil {
+			t.Fatal(err)
+		}
+		r := &sam.Record{Pos: 10, Cigar: c}
+		if got := AlignedEnd(r); got != want {
+			t.Errorf("AlignedEnd(%s at 10) = %d, want %d", cigar, got, want)
+		}
+	}
+}

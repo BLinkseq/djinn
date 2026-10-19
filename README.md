@@ -14,11 +14,18 @@ Sort records by barcode rather than name or position
 
 ## Molecule statistics
 `djinn sam stats` summarizes each molecule of a coordinate-sorted SAM/BAM file: number of reads, start, end,
-inferred length, aligned bp, inferred insert length and coverage. Reads that share a barcode can be split into
-separate molecules with `--distance-threshold`. A barcode is valid when its `VX` tag says so, or, when there is
+inferred length, aligned bp, inferred insert length and coverage. Each barcode is one molecule; to tell apart
+molecules that share a barcode, run the file through `djinn sam deconvolve` first. A barcode is valid when its `VX` tag says so, or, when there is
 no `VX` tag, when the barcode itself is valid. `djinn fq stats` does the same kind of summary for a FASTQ file:
 reads, reads with a barcode, valid and invalid barcodes, and how many barcodes were bad at each position
 (haplotagging segment `A00`, stLFR part `0`, TELLseq base `N`).
+
+## Deconvolution
+Different molecules can share a barcode. `djinn sam deconvolve -d DISTANCE` tells them apart by where their reads
+sit: when a barcode's reads are more than `DISTANCE` bases apart, the later ones get the barcode with a hyphenated
+number on the end (`BARCODE`, `BARCODE-1`, `BARCODE-2`, ...). Everything else in every record is left alone, and a
+summary (molecules before and after, and how many barcodes were split how many times) goes to stderr. Chain it into
+`stats` to get per-molecule numbers: `djinn sam deconvolve -d 50000 in.bam | djinn sam stats -`.
 
 ## Filtering
 - separate linked reads from singletons
@@ -59,4 +66,4 @@ This is **extremely experimental** and it converts a paired-end linked-read fast
 | [x] | [x] | standardize       | 
 | [ ] | [ ] | concat            |
 | [ ] |     | spoof-hic         |               
-|     | [ ] | deconvolute       |
+|     | [x] | deconvolute       |

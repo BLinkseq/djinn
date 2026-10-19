@@ -265,6 +265,24 @@ func GetIntTag(r *sam.Record, tag string) (int, bool) {
 	return 0, false
 }
 
+// AlignedEnd is the position just past the last reference base a read covers, so Pos and AlignedEnd
+// give the stretch of the genome it spans. Only CIGAR operations that walk along the reference count
+// (matches, deletions, skips); a CIGAR that covers no reference at all counts as one base, as htslib's
+// bam_endpos does.
+func AlignedEnd(r *sam.Record) int {
+	n := 0
+	for _, op := range r.Cigar {
+		switch op.Type() {
+		case sam.CigarMatch, sam.CigarDeletion, sam.CigarSkipped, sam.CigarEqual, sam.CigarMismatch:
+			n += op.Len()
+		}
+	}
+	if n == 0 {
+		n = 1
+	}
+	return r.Pos + n
+}
+
 // pairedFlag returns the SAM FLAG integer for a paired unmapped read.
 // R1: 0x1|0x4|0x8|0x40 = 77   R2: 0x1|0x4|0x8|0x80 = 141
 func PairedFlag(isRead1 bool) int {

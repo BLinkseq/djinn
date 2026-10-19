@@ -35,6 +35,29 @@ func captureStdout(t *testing.T, fn func() error) (string, error) {
 	return <-outCh, fnErr
 }
 
+// captureStderr is captureStdout for os.Stderr.
+func captureStderr(t *testing.T, fn func() error) (string, error) {
+	t.Helper()
+	orig := os.Stderr
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Stderr = w
+	outCh := make(chan string, 1)
+	go func() {
+		var buf bytes.Buffer
+		io.Copy(&buf, r)
+		outCh <- buf.String()
+	}()
+
+	fnErr := fn()
+
+	w.Close()
+	os.Stderr = orig
+	return <-outCh, fnErr
+}
+
 func tempPath(t *testing.T, name string) string {
 	t.Helper()
 	return filepath.Join(t.TempDir(), name)
@@ -67,9 +90,9 @@ func writeSam(t *testing.T, records ...string) string {
 }
 
 // statsOf runs StatsXam on path and returns the output split into lines (header excluded).
-func statsOf(t *testing.T, path string, distance int) []string {
+func statsOf(t *testing.T, path string) []string {
 	t.Helper()
-	out, err := captureStdout(t, func() error { return StatsXam(path, distance, 1) })
+	out, err := captureStdout(t, func() error { return StatsXam(path, 1) })
 	if err != nil {
 		t.Fatalf("StatsXam: %v", err)
 	}

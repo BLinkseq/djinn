@@ -152,19 +152,6 @@ func TestLengthsMatchPysam(t *testing.T) {
 	}
 }
 
-func TestAlignedEnd(t *testing.T) {
-	for cigar, want := range map[string]int{
-		"100M": 110, "5S95M": 105, "30M5D70M": 115, "40M300N60M": 410, "50=2X48=": 110,
-		"8H3S40M2S4H": 50, "10I": 11, // no reference consumed: htslib counts one base
-	} {
-		r := record(t, cigar, 0)
-		r.Pos = 10
-		if got := alignedEnd(r); got != want {
-			t.Errorf("alignedEnd(%s at 10) = %d, want %d", cigar, got, want)
-		}
-	}
-}
-
 func TestInsertSize(t *testing.T) {
 	r := record(t, "5S90M5S", 100)
 	for _, c := range []struct {

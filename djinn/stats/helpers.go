@@ -81,24 +81,6 @@ func inferredQueryLength(r *sam.Record) int {
 	return n
 }
 
-// alignedEnd is the position just past the last reference base the read covers, so start and end
-// give the stretch of the genome it spans (pysam's reference_end). Only operations that walk along
-// the reference count (matches, deletions, skips). A recipe that covers no reference at all is
-// treated as covering one base, as the underlying htslib library does.
-func alignedEnd(r *sam.Record) int {
-	n := 0
-	for _, op := range r.Cigar {
-		switch op.Type() {
-		case sam.CigarMatch, sam.CigarDeletion, sam.CigarSkipped, sam.CigarEqual, sam.CigarMismatch:
-			n += op.Len()
-		}
-	}
-	if n == 0 {
-		n = 1
-	}
-	return r.Pos + n
-}
-
 // insertSize is the length of the original DNA fragment the read came from, as best we can tell.
 // For paired reads the file states it (the "template length"), which is negative on the second
 // mate, so we clamp at zero. For an unpaired read we take the larger of the stated length and the
