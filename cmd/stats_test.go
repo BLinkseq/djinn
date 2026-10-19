@@ -155,3 +155,17 @@ func TestStatsFqArgs(t *testing.T) {
 		}
 	})
 }
+
+func TestIsSamSorted(t *testing.T) {
+	dir := t.TempDir()
+	if err := isSamSorted(makeSortedSam(t, dir, "sorted.sam")); err != nil {
+		t.Errorf("coordinate-sorted file rejected: %v", err)
+	}
+	unsorted := filepath.Join(dir, "unsorted.sam")
+	if err := os.WriteFile(unsorted, []byte("@HD\tVN:1.6\tSO:unsorted\n@SQ\tSN:c1\tLN:1000\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := isSamSorted(unsorted); err == nil {
+		t.Error("unsorted file accepted")
+	}
+}

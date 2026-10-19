@@ -42,13 +42,13 @@ func writeHapFastq(t *testing.T, path string, reads []hapRead) {
 		}
 		sb.WriteByte('@')
 		sb.WriteString(id)
-		desc.WriteByte('\n')
-		desc.WriteString(seq)
-		desc.WriteString("\n+\n")
-		desc.WriteString(qual)
-		desc.WriteByte('\n')
 		sb.WriteString(desc.String())
-
+		sb.WriteByte('\n')
+		sb.WriteString(seq)
+		sb.WriteString("\n+\n")
+		sb.WriteString(qual)
+		sb.WriteByte('\n')
+	}
 	if err := os.WriteFile(path, []byte(sb.String()), 0o644); err != nil {
 		t.Fatal(err)
 	}
