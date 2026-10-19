@@ -1,13 +1,24 @@
 package cmd
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 )
 
+// makeSortedSam writes a tiny coordinate-sorted SAM file, which is what stats and deconvolve insist on.
+func makeSortedSam(t *testing.T, dir, name string) string {
+	t.Helper()
+	p := filepath.Join(dir, name)
+	if err := os.WriteFile(p, []byte("@HD\tVN:1.6\tSO:coordinate\n@SQ\tSN:c1\tLN:1000\n"), 0o644); err != nil {
+		t.Fatalf("setup file: %v", err)
+	}
+	return p
+}
+
 func TestStatsXamArgs(t *testing.T) {
 	dir := t.TempDir()
-	valid := makeReadableFile(t, dir, "in.bam")
+	valid := makeSortedSam(t, dir, "in.sam")
 
 	t.Run("no args", func(t *testing.T) {
 		if err := statsXamCmd.Args(statsXamCmd, []string{}); err == nil {
@@ -52,7 +63,7 @@ func TestStatsXamArgs(t *testing.T) {
 
 func TestDeconvolveXamArgs(t *testing.T) {
 	dir := t.TempDir()
-	valid := makeReadableFile(t, dir, "in.bam")
+	valid := makeSortedSam(t, dir, "in.sam")
 	setDistance := func(t *testing.T, v string) {
 		t.Helper()
 		setStringFlag(t, deconvolveXamCmd.Flags(), "distance-threshold", v)
