@@ -13,14 +13,17 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Build binaries
+      - name: Build project tarball
         run: |
           mkdir artifacts
+          tar -zcvf --exclude test --exclude .git* artifacts/djinn.${{ github.ref_name }}.tar.gz .
+      - name: Build binaries
+        run: |
           for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
             os=${target%/*}; arch=${target#*/}
             dir=djinn.${{ github.ref_name }}.$os-$arch
@@ -32,6 +35,8 @@ jobs:
             tar -zcvf artifacts/$dir.tar.gz $dir
           done
       - name: Create Release with Assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ./artifacts/*.tar.gz
+          body_path: CHANGELOG.md
+          generate_release_notes: true
