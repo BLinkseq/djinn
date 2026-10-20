@@ -1,4 +1,4 @@
-![djinn logo](https://raw.githubusercontent.com/pdimens/djinn/refs/heads/docs/static/djinn.png)
+![djinn logo](docs/static/djinn.png)
 
 [![GitHub Release](https://img.shields.io/github/v/release/pdimens/djinn?style=for-the-badge&logo=anaconda&logoColor=ffffff)](https://github.com/pdimens/djinn/releases)
 [![documentation badge](https://img.shields.io/badge/read%20the-docs-fbab3a?style=for-the-badge&logo=quicklook&logoColor=ffffff)](https://pdimens.github.io/djinn)
@@ -69,3 +69,4 @@ This is **extremely experimental** and it converts a paired-end linked-read fast
 | [ ] | [ ] | concat            |
 | [ ] |     | spoof-hic         |               
 |     | [x] | deconvolute       |
+
