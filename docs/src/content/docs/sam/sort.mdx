@@ -1,0 +1,29 @@
+---
+title: Sort linked-read SAM by barcode
+sidebar:
+  order: 4
+  label: sort
+---
+import { Badge } from '@astrojs/starlight/components';
+
+Various linked-read software need data sorted **by barcode** instead of coordinates. While this is often
+the case for FASTQ data, you have the option here to sort alignments by barcode.
+Sometimes you want/need linked-read data to be sorted by barcode. The barcode is expected to be in
+the `BX:Z` SAM tag. If your barcodes aren't in the `BX:Z` SAM tag, use [convert](../convert) or
+[standardize](../standardize) to convert it into a compliant format.
+
+```bash usage
+djinn sam sort INPUT
+```
+
+Example: sort fastq with `_pebbles` temp directory
+```bash
+djinn sam sort -t _pebbles data/pebbles.bam > pebbles.sort.bam
+```
+
+## Options
+| argument            | description                                          |
+| :------------------ | :--------------------------------------------------- |
+| `INPUT`             | SAM/BAM file <Badge text="required" variant="tip" /> |
+| `-@` `--threads`    | Number of threads to use (default: 2)                |
+| `-t` `--tmp-prefix` | Folder for temporary files                           |

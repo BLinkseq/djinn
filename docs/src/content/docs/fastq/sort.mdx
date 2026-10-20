@@ -1,0 +1,30 @@
+---
+title: Sort linked-read data by barcode
+sidebar:
+  order: 4
+  label: sort
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+Sometimes you want/need linked-read data to be sorted by barcode.
+In order to accomplish this with Djinn, the barcode **must** be in a SAM tag (e.g. `BX`, `BC`) FASTQ or SAM/BAM format. If your 
+barcodes aren't in a SAM tag, consider using [fastq convert](/convert.mdx) or
+[fastq standardize"](/standardize.md) to convert it into a compliant format.
+
+```bash usage
+djinn fastq sort SAMTAG PREFIX INPUT...
+```
+
+```bash example | sort fastq with barcodes in BC tag
+djinn fastq sort BC pebbles_sorted data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
+```
+
+### Running Options
+
+| argument          | description                                                                   |
+|:------------------|:------------------------------------------------------------------------------|
+| `SAMTAG`          | <Badge text="required" variant="tip" /> 2-letter name of the SAM tag storing the barcode (e.g. `BC` or `BX`)  |
+| `PREFIX`          | <Badge text="required" variant="tip" /> output filename prefix                |
+| `INPUT`          | <Badge text="required" variant="tip" /> FASTQ file or file pair         |
+| `-t` `--threads`  | Number of threads to use (default: 4)                                                  |

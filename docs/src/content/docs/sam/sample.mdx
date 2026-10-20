@@ -1,0 +1,38 @@
+---
+title: Downsample SAM by barcode
+sidebar:
+  order: 4
+  label: sample
+---
+import { Badge } from '@astrojs/starlight/components';
+
+While downsampling SAM/BAM files is relatively simple with tools such as `awk`, `samtools`, etc.,
+`sample` allows you to downsample a SAM/BAM file **by barcodes**. That means you can
+keep all the reads associated with `-d` number of barcodes or fraction of barcodes (e.g. `-d 0.5`
+will downsample to 50% of all barcodes).
+
+Downsamples a SAM/BAM file by barcode to keep all records containing `-d` randomly sampled barcodes.
+If `d >= 1`, the downsampling is a fixed number of barcodes, whereas `d < 1` would indicate a fraction of the total
+number of barcodes (e.g. `-d 0.5` retains 50% of all barcodes). Use `--invalid/-i` to include invalid barcodes
+in downsampling. Barcode must be in `BX:Z` SAM tag.
+
+## Usage
+
+```bash
+djinn sam sample -d <value> [-i] INPUT > output.bam
+```
+
+Example: downsample bam file by 50% of the barcodes, ignoring invalid barcodes 
+```bash
+djinn sam sample -@ 8 -d 0.5 sample1.bam > sample1.half.bam
+```
+
+## Options
+| argument            | description                                                                            |
+| :------------------ | :------------------------------------------------------------------------------------- |
+| `INPUT`             | SAM/BAM file     <Badge text="required" variant="tip" />                               |
+| `-d` `--downsample` | Number/fraction of barcodes to downsample to   <Badge text="required" variant="tip" /> |
+| `-i` `--invalid`    | Include invalid barcodes in downsampling                                               |
+| `-S` `--sam`        | Output SAM instead of BAM                                                              |
+| `-s` `--seed`       | Random seed for sampling <Badge text="optional" variant="tip" />                       |
+| `-t` `--threads`    | Threads to use (default: 2)                                                            |

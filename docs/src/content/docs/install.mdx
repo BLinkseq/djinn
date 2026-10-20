@@ -1,0 +1,39 @@
+---
+title: Installing Djinn
+sidebar:
+  order: 1
+  label: Install
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+Djinn can be installed from bioconda using conda, mamba, or pixi. Or, if you want to build it from source, you can compile the Go
+code into a single `djinn` binary.
+
+
+## conda <Badge text="recommended" variant="tip" />
+Djinn can be installed with conda/mamba:
+```bash
+conda install -c bioconda -c conda-forge bioconda::djinn
+```
+
+## pixi <Badge text="recommended" variant="tip" />
+If you have an existing pixi environment configured with the `bioconda` channel:
+```bash
+pixi add djinn
+```
+
+If you don't have a pixi environment in your project directory:
+```bash
+pixi init -c conda-forge -c bioconda
+pixi add djinn
+```
+
+## Build from source
+Depends on: Go and Make
+```bash
+git clone https://github.com/BLinkseq/djinn.git
+cd djinn
+make
+```
+And the resulting binary will be in `bin/djinn`.

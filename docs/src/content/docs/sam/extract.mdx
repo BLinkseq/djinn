@@ -1,0 +1,26 @@
+---
+title: Extract linked-read barcodes
+sidebar:
+  order: 4
+  label: extract
+---
+import { Badge } from '@astrojs/starlight/components';
+
+To get a list of all the unique barcodes in your data, use `extract`.
+
+## Usage
+```bash
+djinn sam extract INPUT
+```
+
+Example
+```bash
+djinn sam extract sample1.bam > sample1.bc
+```
+
+## Options
+| argument          | description                                                                   |
+|:------------------|:------------------------------------------------------------------------------|
+| `INPUT`           | SAM/BAM file <Badge text="required" variant="tip" />                          |
+| `-i` `--invalid`  | Include invalid barcodes                                                      |
+| `-@` `--threads`  | Number of threads to use (default: 2)                                         |
