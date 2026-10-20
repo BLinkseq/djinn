@@ -37,22 +37,28 @@ export default defineConfig({
         starlightSidebarTopics([
           {
             label: 'Install',
-            link: 'install',
+            link: '/install',
             icon: 'download',
             items: ['install']
           },
           {
             label: 'FASTQ',
-            link: 'fastq/concat',
+            link: '/fastq/',
             icon: 'information',
-            items: [{ autogenerate: { directory: 'fastq' } }],
+            items: [{
+              label: 'FASTQ File Operations',
+              items: [{ autogenerate: { directory: 'fastq' } }],
+              }]
           },
           {
             label: 'SAM',
-            link: 'sam/concat',
+            link: '/sam/',
             icon: 'information',
-            items: [{ autogenerate: { directory: 'sam' } }],
-          },
+            items: [{
+              label: 'SAM/BAM File Operations',
+              items: [{ autogenerate: { directory: 'sam' } }],
+            }],
+          }
         ]),
       ],
 		}),

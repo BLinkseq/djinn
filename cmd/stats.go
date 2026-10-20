@@ -108,7 +108,7 @@ func init() {
 
 	//---Command line arguments-------------
 	statsXamCmd.Flags().IntP("distance-threshold", "d", 50000, "Distance (bp) that splits a barcode's reads into separate molecules, where 0 skips deconvolution")
-	statsXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	statsXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
 	statsFqCmd.Flags().StringP("platform", "p", "", "Linked-read technology: haplotagging, stlfr or tellseq (default: detect from the first 100 reads)")
 }

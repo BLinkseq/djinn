@@ -1,0 +1,33 @@
+---
+title: Remove records with unlinked barcodes
+sidebar:
+  order: 4
+  label: rm-unlinked
+---
+import { Badge } from '@astrojs/starlight/components';
+
+In order for reads to be "linked", they must share a barcode with at least one other read pair. Reads or
+read-pairs that do not share a barcode are unlinked and sometimes called singletons. Use `rm-unlinked` to
+to isolate records with meaningful linked-read information. If you want to keep a separate
+file of unlinked/singleton records, you can specify a file name after `--singletons`. Barcodes are counted
+per read-pair or unpair read.
+
+## Usage
+
+```bash
+djinn sam rm-unlinked [--singletons] INPUT > output.bam
+```
+
+Example: remove unlinked barcodes and retain them in a separate file
+```bash 
+djinn sam rm-unlinked --singletons hyena.singles.bam hyena.bam > hyena.filter.bam
+```
+
+## Options
+| argument      | description                                                                   |
+|:------------------|:------------------------------------------------------------------------------|
+| `INPUTS`            |  SAM/BAM file <Badge text="required" variant="tip" />          |
+| `-b` `--bc-count`   | Write valid barcode counts to this file <Badge text="optional" variant="tip" /> |
+| `-S` `--sam`        | Output sam instead of BAM |
+| `-s` `--singletons` | Write valid singleton records to this file <Badge text="optional" variant="tip" /> |
+| `-@` `--threads`    | Threads to use |

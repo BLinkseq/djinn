@@ -4,7 +4,6 @@ sidebar:
   order: 4
   label: ncbi
 ---
-
 import { Badge } from '@astrojs/starlight/components';
 
 When submitting sequences to NCBI, [they reformat the read headers](https://www.ncbi.nlm.nih.gov/sra/docs/sra-data-formats/),
@@ -15,17 +14,17 @@ unaligned BAM files (recommended).
 
 The reverse of this process is to convert to FASTQ from SAM/BAM.
 
-```bash losslessly convert to fastq from unaligned BAM
+## Usage
+```bash
 djinn sam ncbi PREFIX infile.bam
 
 # is equivalent to #
 samtools fastq -N -c 6 -T "*" -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz infile.bam
 ```
 
-## Running Options
-
+## Options
 | argument          | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
-| `INPUT`           | <Badge text="required" variant="tip" /> SAM/BAM file            |
-| `PREFIX`          | <Badge text="required" variant="tip" /> output filename prefix                |
-| `-t` `--threads`  | Number of threads to use (default: 4)                                         |
+| `INPUT`           | SAM/BAM file <Badge text="required" variant="tip" />             |
+| `PREFIX`          | output filename prefix <Badge text="required" variant="tip" />                 |
+| `-@` `--threads`  | Number of threads to use (default: 2)                                         |

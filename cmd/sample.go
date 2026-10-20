@@ -3,8 +3,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/blinkseq/djinn/sample"
 	"runtime"
+
+	"github.com/blinkseq/djinn/sample"
 
 	"github.com/spf13/cobra"
 )
@@ -15,7 +16,7 @@ var sampleXamCmd = &cobra.Command{
 	Example: "sample -t 8 -d 50000 curratum.bam > curratum.sample50k.bam",
 	Long: "Downsamples a SAM/BAM file by barcode to keep all records containing `-d` randomly sampled barcodes. " +
 		"If `d >= 1`, the downsampling is a fixed number of barcodes, whereas `d < 1` would indicate a fraction of the total " +
-		"number of barcodes `(e.g. `-d 0.5` retains 50% of all barcodes). Use `--invalid/-i` to include invalid barcodes " +
+		"number of barcodes (e.g. `-d 0.5` retains 50% of all barcodes). Use `--invalid/-i` to include invalid barcodes " +
 		"in downsampling. Barcode must be in `BX:Z` SAM tag. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
@@ -74,7 +75,7 @@ var sampleFqCmd = &cobra.Command{
 	Long: "Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped). " +
 		"Downsamples by barcode to keep all records containing `-d` randomly sampled barcodes. " +
 		"If `d >= 1`, the downsampling is a fixed number of barcodes, whereas `d < 1` would indicate a fraction of the total " +
-		"number of barcodes `(e.g. `-d 0.5` retains 50% of all barcodes). Use `--invalid/-i` to include invalid barcodes " +
+		"number of barcodes (e.g. `-d 0.5` retains 50% of all barcodes). Use `--invalid/-i` to include invalid barcodes " +
 		"in downsampling.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
@@ -130,7 +131,7 @@ func init() {
 	//---Command line arguments-------------
 	sampleXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
 	sampleXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes in subsampling")
-	sampleXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	sampleXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	sampleXamCmd.Flags().IntP("seed", "s", -1, "Random seed for sampling, must be >= 0")
 	sampleXamCmd.Flags().Float64P("downsample", "d", 0.0, "Number (>=1) or fraction (<1) of barcodes to keep")
 

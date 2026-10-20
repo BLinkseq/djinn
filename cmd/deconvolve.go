@@ -72,5 +72,5 @@ func init() {
 	//---Command line arguments-------------
 	deconvolveXamCmd.Flags().IntP("distance-threshold", "d", 50000, "Distance (bp) between a barcode's reads that makes them separate molecules")
 	deconvolveXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
-	deconvolveXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	deconvolveXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

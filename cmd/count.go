@@ -3,8 +3,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/blinkseq/djinn/count"
 	"runtime"
+
+	"github.com/blinkseq/djinn/count"
 
 	"github.com/spf13/cobra"
 )
@@ -13,7 +14,7 @@ import (
 var countXamCmd = &cobra.Command{
 	Use:                   "count [options] file.bam",
 	Short:                 "Count barcode occurance",
-	Example:               "count -t 4 curratum.bam > curratum.bc",
+	Example:               "count -@ 4 curratum.bam > curratum.bc",
 	Long:                  "Inputs must be one SAM/BAM file. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
@@ -85,7 +86,7 @@ func init() {
 
 	//---Command line arguments-------------
 	countXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
-	countXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	countXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
 	countFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 }

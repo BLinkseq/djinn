@@ -3,8 +3,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/blinkseq/djinn/ncbi"
 	"runtime"
+
+	"github.com/blinkseq/djinn/ncbi"
 
 	"github.com/spf13/cobra"
 )
@@ -12,7 +13,7 @@ import (
 var ncbiXam2FqCmd = &cobra.Command{
 	Use:                   "ncbi [options] file.bam",
 	Short:                 "BAM → FASTQ conversion from NCBI",
-	Example:               "ncbi -t 10 obesus_stlfr obesus.bam",
+	Example:               "ncbi -@ 10 obesus_stlfr obesus.bam",
 	Long:                  "Converts an unmapped SAM/BAM file to FASTQ sequences, losslessly, preserving barcode tags.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
@@ -88,10 +89,8 @@ func init() {
 	fqCmd.AddCommand(ncbiFq2XamCmd)
 
 	//---Command line arguments-------------
-	ncbiXam2FqCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
-	ncbiXam2FqCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
-	ncbiXam2FqCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file")
+	ncbiXam2FqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
-	ncbiFq2XamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	ncbiFq2XamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	ncbiFq2XamCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")
 }

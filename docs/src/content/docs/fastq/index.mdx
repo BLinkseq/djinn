@@ -1,0 +1,12 @@
+---
+title: FASTQ file operations
+sidebar:
+  hidden: true
+  order: 4
+  label: index
+---
+
+
+You may be interested in retaining only "useful" linked reads, that is, reads with a valid barcode or reads
+that are not singletons (i.e. there are more than 2 reads with the same barcode). Like their names suggests, [!badge corners="pill" text="filter-invalid"]() will remove invalid barcodes and [!badge corners="pill" text="filter-singletons"]() will remove singletons.
+Each of these commands can optionally retain the removed reads in separate files.

@@ -14,7 +14,7 @@ import (
 var extractXamCmd = &cobra.Command{
 	Use:                   "extract [options] file.bam",
 	Short:                 "Extract all unique barcodes",
-	Example:               "extract -t 4 bombus.bam > bombus.bc",
+	Example:               "extract -@ 4 bombus.bam > bombus.bc",
 	Long:                  "Inputs must be one SAM/BAM file. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,

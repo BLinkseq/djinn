@@ -13,7 +13,7 @@ import (
 var unlinkedXamCmd = &cobra.Command{
 	Use:     "rm-unlinked [options] file.bam",
 	Short:   "Remove records with unlinked barcodes",
-	Example: "rm-unlinked -t 10 curratum.bam > curratum.linked.bam",
+	Example: "rm-unlinked -@ 10 curratum.bam > curratum.linked.bam",
 	Long: "Input must be one SAM/BAM file " +
 		"Input expect barcodes to follow the standard (BX tag), stlfr (seq_id#barcode), or tellseq " +
 		"(seq_id:barcode) formats. By default, only writes filtered output. Writes to stdout.",
@@ -140,7 +140,7 @@ func init() {
 
 	//---Command line arguments-------------
 	unlinkedXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
-	unlinkedXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	unlinkedXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	unlinkedXamCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file (optional)")
 	unlinkedXamCmd.Flags().StringP("bc-count", "b", "", "Write valid barcode counts to this file (optional)")
 

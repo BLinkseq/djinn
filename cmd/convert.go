@@ -3,9 +3,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/blinkseq/djinn/convert"
 	"runtime"
 	"strings"
+
+	"github.com/blinkseq/djinn/convert"
 
 	"github.com/spf13/cobra"
 )
@@ -13,7 +14,7 @@ import (
 var convertXamCmd = &cobra.Command{
 	Use:     "convert [options] toFormat file.bam",
 	Short:   "Convert barcodes between linked-read formats",
-	Example: "convert -t 3 10x gcurratum.bam > gcurratum.10x.bam",
+	Example: "convert -@ 3 10x gcurratum.bam > gcurratum.10x.bam",
 	Long: `Inputs must be one SAM/BAM file, with barcodes specified in BX:Z SAM tag. Writes to stdout. The first positional argument toFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x).
 
 | toFormat     | barcode format | example            |
@@ -151,7 +152,7 @@ func init() {
 
 	//---Command line arguments-------------
 	convertXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
-	convertXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	convertXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	convertXamCmd.Flags().StringP("map", "m", "", "Write barcode conversion map to this file (required if not 'standard')")
 
 	convertFqCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")

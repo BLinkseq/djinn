@@ -1,0 +1,29 @@
+---
+title: Remove records with invalid barcodes
+sidebar:
+  order: 4
+  label: rm-invalid
+---
+import { Badge } from '@astrojs/starlight/components';
+
+You may be interested in retaining only "useful" linked reads, that is, reads with a valid (reliable) barcode.
+Using `rm-invalid` will remove alignment records invalid barcodes. If you want to keep a separate
+file of records with invalid barcodes, you can specify a file name after `--invalid`.
+
+## Usage
+```bash
+djinn sam rm-invalid [--invalid] INPUT > output.bam
+```
+
+Example: remove invalid barcodes and retain them in a separate file
+```bash 
+djinn sam rm-invalid --invalid echidna.inv.bam echidna.bam > echidna.valid.bam
+```
+
+## Options
+| argument           | description                                                                   |
+|:------------------|:------------------------------------------------------------------------------|
+| `INPUT`          | SAM/BAM file <Badge text="required" variant="tip" />                           |
+| `-i` `--invalid`  | output records with invalid barcodes to this file  <Badge text="optional" variant="tip" />                  |
+| `-S` `--sam`      | Output SAM instead of BAM                                                     |
+| `-@` `--threads`  | Number of threads to use (default: 2)                                         |

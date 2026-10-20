@@ -1,0 +1,19 @@
+---
+title: SAM/BAM file operations
+sidebar:
+  hidden: true
+  order: 4
+  label: index
+---
+
+In linked-read data, barcode information is also preserved in the alignment SAM/BAM files. 
+A proper linked-read pipeline will make sure the barcode is preserved under the `BX:Z` SAM tag,
+e.g., `BX:Z:1_2_33`, even if it wasn't there in the FASTQ files that were used for alignment.
+Djinn provides various ways to manipulate SAM/BAM files (CRAM is not supported), all of which write
+to `stdout`. The typical form for `djinn sam` commands is:
+
+```bash
+djinn sam command <options> inputs... > output
+```
+ Most `djinn sam` commands have an option to set threads (`-@` `--threads`) for parallelism and
+ an option to output SAM instead of BAM (`-S` `--sam`) when output is an alignment file.

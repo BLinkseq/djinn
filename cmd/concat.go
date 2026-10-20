@@ -3,8 +3,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/blinkseq/djinn/concat"
 	"runtime"
+
+	"github.com/blinkseq/djinn/concat"
 
 	"github.com/spf13/cobra"
 )
@@ -13,7 +14,7 @@ import (
 var concatXamCmd = &cobra.Command{
 	Use:                   "concat [options] file1.bam file2.bam...",
 	Short:                 "Barcode-aware file concatenation",
-	Example:               "concat -t 4 curratum_gulf.bam curratum_gulf2.bam > curratum.concat.bam",
+	Example:               "concat -@ 4 curratum_gulf.bam curratum_gulf2.bam > curratum.concat.bam",
 	Long:                  "Concatenate records from linked-read SAM/BAM files while making sure barcodes tags (BX:Z) remain unique for every sample by overwriting all barcodes. Input must be one or more SAM/BAM files. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
@@ -56,10 +57,10 @@ func init() {
 	//fqCmd.AddCommand(concatFqCmd)
 
 	//---Command line arguments-------------
-	concatXamCmd.Flags().BoolP("sam", "S", false, "Output SAM instead of BAM") //not implemented yet
-	concatXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	concatXamCmd.Flags().BoolP("sam", "S", false, "Output SAM instead of BAM")
+	concatXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
-	//sortFqCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	//sortFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	//sortFqCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
 	//sortFqCmd.Flags().Bool("standardize", false, "Output using standardized BX:Z:/VX:i: tags instead of the detected input format")
 	//sortFqCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")

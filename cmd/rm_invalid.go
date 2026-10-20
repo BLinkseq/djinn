@@ -3,8 +3,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/blinkseq/djinn/invalid"
 	"runtime"
+
+	"github.com/blinkseq/djinn/invalid"
 
 	"github.com/spf13/cobra"
 )
@@ -12,7 +13,7 @@ import (
 var invalidXamCmd = &cobra.Command{
 	Use:                   "rm-invalid [options] file.bam",
 	Short:                 "Remove records with invalid barcodes",
-	Example:               "rm-invalid -t 10 curratum.bam > curratum.valid.bam",
+	Example:               "rm-invalid -@ 10 curratum.bam > curratum.valid.bam",
 	Long:                  "Inputs must be one SAM/BAM file. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
@@ -118,7 +119,7 @@ func init() {
 
 	//---Command line arguments-------------
 	invalidXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
-	invalidXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	invalidXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	invalidXamCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to files with this prefix")
 
 	invalidFqCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to files with this prefix")
