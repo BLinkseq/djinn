@@ -1,0 +1,28 @@
+---
+title: Remove records with invalid barcodes
+sidebar:
+  order: 4
+  label: rm-invalid
+---
+import { Badge } from '@astrojs/starlight/components';
+
+You may be interested in retaining only "useful" linked reads, that is, reads with a valid (reliable) barcode.
+Using `rm-invalid` will remove alignment records invalid barcodes. If you want to keep a separate
+file (or files) of records with invalid barcodes use the `--invalid` flag.
+
+## Usage
+```bash
+djinn sam rm-invalid [--invalid] PREFIX file.R1.fq.gz [file.R2.fq.gz]
+```
+
+Example: remove invalid barcodes and retain them in a separate file
+```bash 
+djinn sam rm-invalid --invalid echinda.valid echidna.R*.fq.gz
+```
+
+## Options
+| argument         | description                                                                                |
+| :--------------- | :----------------------------------------------------------------------------------------- |
+| `PREFIX`          |  output filename prefix   <Badge text="required" variant="tip" />    |
+| `file.R*.fq.gz`   | FASTQ file or file pair <Badge text="required" variant="tip" />                                       |
+| `-i` `--invalid` | output records with invalid barcodes to `PREFIX.invalid.*`                                 |

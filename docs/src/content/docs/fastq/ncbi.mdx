@@ -5,38 +5,43 @@ sidebar:
   label: ncbi
 ---
 
-import { Badge } from '@astrojs/starlight/components';
+import { Badge, Aside } from '@astrojs/starlight/components';
 
 When submitting sequences to NCBI, [they reformat the read headers](https://www.ncbi.nlm.nih.gov/sra/docs/sra-data-formats/),
 which means any useful information in the read headers disappears. This applies to haplotagging, TELLseq, and stLFR FASTQ
 formats, where the barcode is encoded in the sequence header, and thus vanishes from the public archive when uploaded to
 NCBI. Obviously this isn't great, so we propose a simple approach to solving this problem: uploading sequence data as
-unaligned BAM files (recommended).
+unaligned BAM files <Badge text="recommended" variant="success" />.
 
-If you didn't already know, the BAM format is quite flexible and contains all the fields one would already use in FASTQ format.
+The BAM format is quite flexible and contains all the fields one would already use in FASTQ format.
 BAM (or SAM) files can also have unaligned records in them, meaning you can quite easily convert a paired-end set of FASTQ
 files into a single unaligned BAM file without any data loss (and also free up disk space).
 
-!!! Barcode Placement
-**For this to work as intended** the barcodes should be stored in the `BX:Z` tag (or some other SAM-compliant tag e.g. `BC:Z`).
-It's possible NCBI will still strip the read name from alignment records, so if your barcode isn't stored in a SAM tag,
-you risk losing the barcode forever!
-!!!
+<Aside type="caution">
+    **For this to work as intended** the barcodes should be stored in the `BX:Z` tag (or some other SAM-compliant tag e.g. `BC:Z`).
+    It's possible NCBI will still strip the read name from alignment records, so if your barcode isn't stored in a SAM tag,
+    you risk losing the barcode forever!
+</Aside>
 
-```bash losslessly convert to unaligned BAM
+
+## Usage
+```bash
+djinn fastq ncbi file.R1.fq.gz [file.R2.fq.gz] > output.bam
+```
+
+Example
+```bash
 djinn fastq ncbi file.R1.fq file.R2.fq > out.bam
-
-# is equivalent to #
+```
+If you didn't want to use djinn, you can also achieve the same using `samtools`:
+```bash
 samtools import -O BAM -T "*" -1 file.R1.fq file.R2.fq > out.bam
 ```
 
-```bash usage
-djinn fastq ncbi INPUT > output.bam
-```
+## Options
 
-## :icon-terminal: Running Options
-
-| argument          | description                                                                   |
-|:------------------|:------------------------------------------------------------------------------|
-| `INPUT`          | <Badge text="required" variant="tip" /> FASTQ file or file pair                |
-| `-t` `--threads`  | Number of threads to use (default: 4)                                         |
+| argument         | description                                                                |
+|:-----------------|:---------------------------------------------------------------------------|
+| `file.R*.fq.gz`  | FASTQ file or file pair <Badge text="required" variant="tip" />            |
+| `-b` `--bc-map`  | Valid barcode list <Badge text="required: for 10X Genomics input" variant="tip" />                   |
+| `-t` `--threads` | Threads to use (default: 2)                                      |

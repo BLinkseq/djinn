@@ -5,3 +5,54 @@ sidebar:
   label: convert
 ---
 import { Badge } from '@astrojs/starlight/components';
+
+If you need to convert between barcode formats 
+
+## Usage
+Input must be one SAM/BAM file, with barcodes specified in `BX:Z` SAM tag. Writes to stdout.
+The first positional argument `TARGET` specifies the output data format: `standard`,
+`haplotagging`, `tellseq`, `stlfr`, or `10x`.
+
+```bash
+convert [options] TARGET file.bam
+```
+
+Example: convert stFLR barcode style to 10X style
+```bash
+convert -@ 3 -m gcur.stlfr210x 10x gcurratum.bam > gcurratum.10x.bam
+```
+
+Example: standardize TELL-seq barcocdes
+```bash
+convert -@ 4 standard gcurratum.tellseq.bam > gcurratum.std.bam
+```
+
+## Options
+
+| argument          | description                                                                   |
+|:------------------|:------------------------------------------------------------------------------|
+| `file.bam`       | SAM/BAM file <Badge text="required" variant="tip" />                         |
+| `TARGET`         | output barcode style: `10x`, `haplotagging`, `tellseq`, `stlfr`, `standard` |
+| `-S` `--sam`      | Output SAM instead of BAM                                                     |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |
+| `-m` `--map`      | Write barcode conversion map to this file <Badge text="required: target != standard" variant="tip" />        |
+
+
+## Output formats
+| targetFormat | barcode format | example            | invalidated by |
+|:-------------|:---------------|:-------------------|:---------------|
+| `10x`          | 16 nucleotides | GGTTGACATTAAGACA   | `N` nucleotide |
+| `haplotagging` | AxxCxxBxxDxx   | A01C93B56D11       | `00` in any of the 4 segments |
+| `standard`     | same as input  | GGCAAATATCGAGAAGTC | `VX:i:0` SAM tag |
+| `stlfr`        | 1_2_3          | 541_9_312          | `0` as any of the 3 segments |
+| `tellseq`      | 18 nucleotides | GGCAAATATCGAGAAGTC | `N` nucleotide |
+
+## Standard format
+The standard format preserves barcode identities (barcodes remain unchanged),
+but adds a `VX:i` SAM tag. This tag describes if the `BX:Z` barcode is valid
+or not.
+- `VX:i:0`: barcode is invalid
+- `VX:i:1`: barcode is valid
+- `VX:i:2+`: any value above `1` is considered invalid
+
+Barcodes will be validated according to their detected technologies as described above.

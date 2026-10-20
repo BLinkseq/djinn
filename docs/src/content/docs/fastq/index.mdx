@@ -6,7 +6,21 @@ sidebar:
   label: index
 ---
 
+Linked-read FASTQ files can take several forms. We **strongly** advocate for the [standard format](https://blinkseq.github.io/lastq/)
+and provide a converter for it, but Djinn can operate on haplotagging (v1), BLink-seq, stLFR, 10X, and TELL-seq data formats
+The general form of those commands is:
 
-You may be interested in retaining only "useful" linked reads, that is, reads with a valid barcode or reads
-that are not singletons (i.e. there are more than 2 reads with the same barcode). Like their names suggests, [!badge corners="pill" text="filter-invalid"]() will remove invalid barcodes and [!badge corners="pill" text="filter-singletons"]() will remove singletons.
-Each of these commands can optionally retain the removed reads in separate files.
+```bash
+djinn fastq command <options> inputs...
+```
+
+ Many `djinn fastq` commands have a required argument `PREFIX` that sets a prefix
+ for writing new FASTQ files. Diagnostics may sombetimes be written to stdout/stderr.
+
+## Barcode technologies
+Djinn auto-detects FASTQ format and barcode type, with expectations like those described
+[here](https://blinkseq.github.io/linkedreads/info/#linked-read-varieties). Mix-matching
+FASTQ and barcode format will confuse the software and is not recommended. As an example,
+having an stLFR barcode (`1_2_3`) suffixed on a read ID with a colon (`:`) like TELL-seq
+does will fail (stLFR expects `#` separator). Using the standard format (`BX:Z` and `VX:i` tags),
+will allow any barcode style.

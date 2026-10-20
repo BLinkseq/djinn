@@ -7,8 +7,7 @@ sidebar:
 import { Badge } from '@astrojs/starlight/components';
 
 You might want a table of the counts (frequency) of all the unique barcodes in your data
-and that's what `count` is for. Records
-with missing barcodes are ignored.
+and that's what `count` is for. Records with missing barcodes are ignored. Writes to `stdout`.
 
 Counting barcodes in SAM/BAM files avoids double-counting by counting forward reads
 if they are unpaired or unpaired, and reverse reads if they are unpaired or the
@@ -27,4 +26,4 @@ djinn sam count sample1.bam > sample1.bxcount
 |:------------------|:------------------------------------------------------------------------------|
 | `INPUT`           | SAM/BAM file <Badge text="required" variant="tip" />                          |
 | `-i` `--invalid`  | Include invalid barcodes                                                      |
-| `-@` `--threads`  | Number of threads to use (default: 2)                                         |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |

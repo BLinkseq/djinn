@@ -14,8 +14,8 @@ import (
 var convertXamCmd = &cobra.Command{
 	Use:     "convert [options] toFormat file.bam",
 	Short:   "Convert barcodes between linked-read formats",
-	Example: "convert -@ 3 10x gcurratum.bam > gcurratum.10x.bam",
-	Long: `Inputs must be one SAM/BAM file, with barcodes specified in BX:Z SAM tag. Writes to stdout. The first positional argument toFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x).
+	Example: "convert -@ 3 -m gcur.map 10x gcurratum.bam > gcurratum.10x.bam",
+	Long: `Input must be one SAM/BAM file, with barcodes specified in BX:Z SAM tag. Writes to stdout. The first positional argument toFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x).
 
 | toFormat     | barcode format | example            |
 ------------------------------------------------------

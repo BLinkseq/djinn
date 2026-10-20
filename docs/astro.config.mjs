@@ -19,7 +19,7 @@ export default defineConfig({
 	integrations: [
     starlight({
       customCss: ['./src/style/global.css'],
-      title: '',
+      title: '3.0',
       logo: { src: '/src/assets/logo.svg'},
       favicon: '/favicon.png',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/BLinkseq/djinn' }],

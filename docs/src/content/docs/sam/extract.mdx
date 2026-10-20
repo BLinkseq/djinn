@@ -6,7 +6,7 @@ sidebar:
 ---
 import { Badge } from '@astrojs/starlight/components';
 
-To get a list of all the unique barcodes in your data, use `extract`.
+To get a list of all the unique barcodes in your data, use `extract`. Writes to `stdout`.
 
 ## Usage
 ```bash
@@ -23,4 +23,4 @@ djinn sam extract sample1.bam > sample1.bc
 |:------------------|:------------------------------------------------------------------------------|
 | `INPUT`           | SAM/BAM file <Badge text="required" variant="tip" />                          |
 | `-i` `--invalid`  | Include invalid barcodes                                                      |
-| `-@` `--threads`  | Number of threads to use (default: 2)                                         |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |

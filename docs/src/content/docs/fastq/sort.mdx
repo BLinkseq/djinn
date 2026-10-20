@@ -7,24 +7,40 @@ sidebar:
 
 import { Badge } from '@astrojs/starlight/components';
 
-Sometimes you want/need linked-read data to be sorted by barcode.
-In order to accomplish this with Djinn, the barcode **must** be in a SAM tag (e.g. `BX`, `BC`) FASTQ or SAM/BAM format. If your 
-barcodes aren't in a SAM tag, consider using [fastq convert](/convert.mdx) or
-[fastq standardize"](/standardize.md) to convert it into a compliant format.
+Alignment files typically need to be coordinate-sorted, but linked-read FASTQ data is
+often most useful when grouped by barcode. It doesn't so much matter that the barcodes are
+alphanumerically sorted, but a sorting algorithm is more efficient and groups by barcodes
+in the process.
 
-```bash usage
-djinn fastq sort SAMTAG PREFIX INPUT...
+Sorting is done using a `samtools` style k-way merge, where reads (or read pairs) are inlined
+with an intermediate format and cast across several temporary files located at `--tmp-dir`, where
+they are then merged back together. Using the `--standardize` flag <Badge text="recommended" variant="success" /> will result in sorted
+[standard format](https://blinkseq.github.io/lastq/) data that, among other things,
+is ready for use in [arachne](https://github.com/blinkseq/arachne).
+
+## Usage
+```bash
+djinn fastq sort [options] PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
-```bash example | sort fastq with barcodes in BC tag
-djinn fastq sort BC pebbles_sorted data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
+Example: sort with specified temporary folder
+```bash
+djinn fastq sort -t pb peb.sort pebbles.R1.fq.gz pebbles.R2.fq.gz
 ```
 
-### Running Options
+Example: return barcode counts and convert to standard format
+```bash
+djinn fastq sort -s peb.sort data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
+```
+
+## Options
+When input is a FASTQ file pair, the reads are expected to be synced between R1 and R2 (i.e., properly paired).
 
 | argument          | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
-| `SAMTAG`          | <Badge text="required" variant="tip" /> 2-letter name of the SAM tag storing the barcode (e.g. `BC` or `BX`)  |
-| `PREFIX`          | <Badge text="required" variant="tip" /> output filename prefix                |
-| `INPUT`          | <Badge text="required" variant="tip" /> FASTQ file or file pair         |
-| `-t` `--threads`  | Number of threads to use (default: 4)                                                  |
+| `PREFIX`          |  output filename prefix   <Badge text="required" variant="tip" />    |
+| `file.R*.fq.gz`   | FASTQ file or file pair   <Badge text="required" variant="tip" />      |
+| `-b` `--bc-map`  | valid barcode list <Badge text="required: for 10X Genomics input" variant="tip" />   |
+| `-s` `--standardize`  | output using standardized BX:Z:/VX:i: tags instead of the detected input format                                                |
+| `-@` `--threads`  | treads to use (default: 2)                                                  |
+| `-t` `--tmp-prefix` | folder for temporary files |

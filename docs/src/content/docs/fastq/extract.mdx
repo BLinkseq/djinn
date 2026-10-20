@@ -1,0 +1,25 @@
+---
+title: Extract linked-read barcodes
+sidebar:
+  order: 4
+  label: extract
+---
+import { Badge } from '@astrojs/starlight/components';
+
+To get a list of all the unique barcodes in your data, use `extract`. Writes to `stdout`.
+
+## Usage
+```bash
+djinn fastq extract file.R1.fq.gz [file.R2.fq.gz]
+```
+
+Example: extract all unique barcodes, including invalid ones 
+```bash
+djinn fastq extract -i sample1.F.fq.gz sample1.R.fq.gz > sample1.bc
+```
+
+## Options
+| argument          | description                                                                   |
+|:------------------|:------------------------------------------------------------------------------|
+| `file.R*fq.gz`    | FASTQ file or file pair <Badge text="required" variant="tip" />                          |
+| `-i` `--invalid`  | Include invalid barcodes                                                      |

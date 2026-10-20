@@ -16,14 +16,14 @@ the `BX:Z` SAM tag. If your barcodes aren't in the `BX:Z` SAM tag, use [convert]
 djinn sam sort INPUT
 ```
 
-Example: sort fastq with `_pebbles` temp directory
+Example: sort fastq with `pb` temporary directory
 ```bash
-djinn sam sort -t _pebbles data/pebbles.bam > pebbles.sort.bam
+djinn sam sort -t pb pebbles.bam > pebbles.sort.bam
 ```
 
 ## Options
 | argument            | description                                          |
 | :------------------ | :--------------------------------------------------- |
 | `INPUT`             | SAM/BAM file <Badge text="required" variant="tip" /> |
-| `-@` `--threads`    | Number of threads to use (default: 2)                |
+| `-@` `--threads`    | Threads to use (default: 2)                |
 | `-t` `--tmp-prefix` | Folder for temporary files                           |

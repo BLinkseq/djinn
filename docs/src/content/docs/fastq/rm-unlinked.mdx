@@ -1,0 +1,32 @@
+---
+title: Remove records with unlinked barcodes
+sidebar:
+  order: 4
+  label: rm-unlinked
+---
+import { Badge } from '@astrojs/starlight/components';
+
+In order for reads to be "linked", they must share a barcode with at least one other read pair. Reads or
+read-pairs that do not share a barcode are unlinked and sometimes called singletons. Use `rm-unlinked` to
+to isolate records with meaningful linked-read information. If you want to keep a separate
+file (or files) of unlinked/singleton records, use the `--unlinked` flag. Barcodes are counted
+per read-pair or unpair read.
+
+## Usage
+
+```bash
+djinn fastq rm-unlinked [--unlinked] PREFIX file.R1.fq.gz [file.R2.fq.gz]
+```
+
+Example: remove unlinked barcodes and retain them in a separate file
+```bash 
+djinn fastq rm-unlinked --unlinked hyena.clean hyena.R*.fq.gz
+```
+
+## Options
+| argument            | description                                                                        |
+| :------------------ | :--------------------------------------------------------------------------------- |
+| `PREFIX`          |  output filename prefix   <Badge text="required" variant="tip" />    |
+| `file.R*.fq.gz`             | FASTQ file or file pair <Badge text="required" variant="tip" />                               |
+| `-b` `--bc-count`   | write valid barcode counts to this file <Badge text="optional" variant="note" />    |
+| `-u` `--unlinked`   | write valid singleton records to `PREFIX.unlinked`                                |
