@@ -1,18 +1,38 @@
 package ncbi
 
 import (
-	"bufio"
 	"fmt"
-	"github.com/blinkseq/djinn/barcodes"
-	"github.com/blinkseq/djinn/fastq"
 	"io"
 	"os"
 	"slices"
 
-	"github.com/biogo/hts/bgzf"
+	"github.com/blinkseq/djinn/barcodes"
+	"github.com/blinkseq/djinn/fastq"
+	"github.com/blinkseq/djinn/xam"
+
+	"github.com/biogo/hts/bam"
+	"github.com/biogo/hts/sam"
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
+
+// newUnmappedBamWriter builds a bam.Writer over os.Stdout with a minimal
+// unsorted header (no references, since every record is unmapped) plus a
+// PG line. bam.Writer owns writing the file-level BAM header/magic itself,
+// so unlike a bare bgzf.Writer this never produces a headerless/malformed
+// BAM stream.
+func newUnmappedBamWriter(threads int, cl string) (*bam.Writer, error) {
+	hdr, err := sam.NewHeader(nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	hdr.Version = "1.6"
+	hdr.SortOrder = sam.Unsorted
+	if err := hdr.AddProgram(xam.NewPG(hdr, cl)); err != nil {
+		return nil, err
+	}
+	return bam.NewWriterLevel(os.Stdout, hdr, 4, threads)
+}
 
 func NcbiFq(fqs []string, bcmap string, threads int) error {
 	var err error
@@ -35,8 +55,10 @@ func NcbiFq(fqs []string, bcmap string, threads int) error {
 	// One writer shared across every input file: creating a fresh one
 	// per file (as this used to) would discard whatever the previous
 	// file's writer had buffered but not yet flushed.
-	bgzfW := bgzf.NewWriter(os.Stdout, threads) // concurrent blocks
-	bw := bufio.NewWriter(bgzfW)
+	bw, err := newUnmappedBamWriter(threads, "djinn ncbi "+fmt.Sprint(fqs))
+	if err != nil {
+		return err
+	}
 
 	// ── open reader ───────────────────────────────────────────────────────────
 	for _, i := range fqs { // iterate over files
@@ -56,14 +78,17 @@ func NcbiFq(fqs []string, bcmap string, threads int) error {
 				return err
 			}
 			rec, _ := coreParser(_rec)
-			rec.WriteBam(bw)
+			samRec, err := rec.ToSamRecord()
+			if err != nil {
+				return err
+			}
+			if err := bw.Write(samRec); err != nil {
+				return err
+			}
 		}
 		fqReader.Close()
 	}
-	if err := bw.Flush(); err != nil {
-		return err
-	}
-	if err := bgzfW.Close(); err != nil {
+	if err := bw.Close(); err != nil {
 		return err
 	}
 	if err := os.Stdout.Close(); err != nil {
@@ -91,9 +116,18 @@ func NCBIfq10x(fqs []string, bcmap string, threads int) error {
 	defer R1Reader.Close()
 
 	// ---- BAM writer -------------------------
-	bgzfW := bgzf.NewWriter(os.Stdout, threads)
-	bw := bufio.NewWriter(bgzfW)
-	bw.WriteString("@HD	VN:1.6	SO:unsorted\n")
+	bw, err := newUnmappedBamWriter(threads, "djinn ncbi "+fmt.Sprint(fqs))
+	if err != nil {
+		return err
+	}
+
+	writeRec := func(core *fastq.CoreFq) error {
+		samRec, err := core.ToSamRecord()
+		if err != nil {
+			return err
+		}
+		return bw.Write(samRec)
+	}
 
 	if len(fqs) == 1 {
 		// Single-end 10X input: no R2 to propagate the barcode onto.
@@ -106,12 +140,11 @@ func NCBIfq10x(fqs []string, bcmap string, threads int) error {
 				return err
 			}
 			r1core, _ := fastq.TenXR12Corefq(_r1, bclist)
-			r1core.WriteBam(bw)
+			if err := writeRec(&r1core); err != nil {
+				return err
+			}
 		}
-		if err := bw.Flush(); err != nil {
-			return err
-		}
-		if err := bgzfW.Close(); err != nil {
+		if err := bw.Close(); err != nil {
 			return err
 		}
 		if err := os.Stdout.Close(); err != nil {
@@ -138,7 +171,9 @@ Loop:
 
 		case nil:
 			r1core, _ = fastq.TenXR12Corefq(_r1, bclist)
-			r1core.WriteBam(bw)
+			if err := writeRec(&r1core); err != nil {
+				return err
+			}
 		default:
 			return r1err
 		}
@@ -161,16 +196,15 @@ Loop:
 				r2core.Barcode = r1core.Barcode
 				r2core.Valid = r1core.Valid
 			}
-			r2core.WriteBam(bw)
+			if err := writeRec(&r2core); err != nil {
+				return err
+			}
 		default:
 			return r2err
 		}
 	}
 
-	if err := bw.Flush(); err != nil {
-		return err
-	}
-	if err := bgzfW.Close(); err != nil {
+	if err := bw.Close(); err != nil {
 		return err
 	}
 	if err := os.Stdout.Close(); err != nil {
