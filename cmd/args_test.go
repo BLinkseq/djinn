@@ -126,23 +126,27 @@ func TestInvalidXamArgs(t *testing.T) {
 	})
 }
 
-func TestInvalidFqArgsRejectsSamePrefix(t *testing.T) {
+func TestInvalidFqArgsWithInvalidFlag(t *testing.T) {
 	dir := t.TempDir()
 	r1 := makeReadableFile(t, dir, "r1.fq")
 	r2 := makeReadableFile(t, dir, "r2.fq")
 	prefix := filepath.Join(dir, "out")
-	reset := func() { invalidFqCmd.Flags().Set("invalid", "") }
+	reset := func() { invalidFqCmd.Flags().Set("invalid", "false") }
 
-	t.Run("same prefix for valid and invalid output is rejected", func(t *testing.T) {
+	// --invalid is a bool: records with invalid barcodes always write to
+	// prefix.invalid.*, so there is no second user-supplied path that could
+	// collide with the main output prefix.
+	t.Run("invalid flag set", func(t *testing.T) {
 		defer reset()
-		setStringFlag(t, invalidFqCmd.Flags(), "invalid", prefix)
-		if err := invalidFqCmd.Args(invalidFqCmd, []string{prefix, r1, r2}); err == nil {
-			t.Errorf("expected error when --invalid prefix equals the valid-output prefix")
+		if err := invalidFqCmd.Flags().Set("invalid", "true"); err != nil {
+			t.Fatalf("setting flag invalid=true: %v", err)
+		}
+		if err := invalidFqCmd.Args(invalidFqCmd, []string{prefix, r1, r2}); err != nil {
+			t.Errorf("unexpected error: %v", err)
 		}
 	})
-	t.Run("distinct prefixes accepted", func(t *testing.T) {
+	t.Run("invalid flag unset", func(t *testing.T) {
 		defer reset()
-		setStringFlag(t, invalidFqCmd.Flags(), "invalid", filepath.Join(dir, "bad"))
 		if err := invalidFqCmd.Args(invalidFqCmd, []string{prefix, r1, r2}); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -155,16 +159,16 @@ func TestUnlinkedXamArgsDefaultSingletonsIsOptional(t *testing.T) {
 	dir := t.TempDir()
 	valid := makeReadableFile(t, dir, "in.bam")
 	reset := func() {
-		unlinkedXamCmd.Flags().Set("singletons", "")
+		unlinkedXamCmd.Flags().Set("unlinked", "")
 		unlinkedXamCmd.Flags().Set("bc-count", "")
 	}
 	defer reset()
 
-	// Regression: --singletons is documented as optional (default ""), and
+	// Regression: --unlinked is documented as optional (default ""), and
 	// the Args func should not fail (or need write access at "."/cwd) when
 	// it's left unset.
 	if err := unlinkedXamCmd.Args(unlinkedXamCmd, []string{valid}); err != nil {
-		t.Errorf("unexpected error with default (empty) --singletons: %v", err)
+		t.Errorf("unexpected error with default (empty) --unlinked: %v", err)
 	}
 }
 
@@ -172,31 +176,36 @@ func TestUnlinkedXamArgsWithSingletonsSet(t *testing.T) {
 	dir := t.TempDir()
 	valid := makeReadableFile(t, dir, "in.bam")
 	reset := func() {
-		unlinkedXamCmd.Flags().Set("singletons", "")
+		unlinkedXamCmd.Flags().Set("unlinked", "")
 		unlinkedXamCmd.Flags().Set("bc-count", "")
 	}
 	defer reset()
 
-	setStringFlag(t, unlinkedXamCmd.Flags(), "singletons", filepath.Join(dir, "singles.bam"))
+	setStringFlag(t, unlinkedXamCmd.Flags(), "unlinked", filepath.Join(dir, "singles.bam"))
 	if err := unlinkedXamCmd.Args(unlinkedXamCmd, []string{valid}); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-func TestUnlinkedFqArgsRejectsSamePrefix(t *testing.T) {
+func TestUnlinkedFqArgsWithUnlinkedFlag(t *testing.T) {
 	dir := t.TempDir()
 	r1 := makeReadableFile(t, dir, "r1.fq")
 	r2 := makeReadableFile(t, dir, "r2.fq")
 	prefix := filepath.Join(dir, "out")
 	reset := func() {
-		unlinkedFqCmd.Flags().Set("singletons", "")
+		unlinkedFqCmd.Flags().Set("unlinked", "false")
 		unlinkedFqCmd.Flags().Set("bc-count", "")
 	}
 	defer reset()
 
-	setStringFlag(t, unlinkedFqCmd.Flags(), "singletons", prefix)
-	if err := unlinkedFqCmd.Args(unlinkedFqCmd, []string{prefix, r1, r2}); err == nil {
-		t.Errorf("expected error when --singletons prefix equals the valid-output prefix")
+	// --unlinked is a bool: singleton records always write to
+	// prefix.unlinked.*, so there is no second user-supplied path that
+	// could collide with the main output prefix.
+	if err := unlinkedFqCmd.Flags().Set("unlinked", "true"); err != nil {
+		t.Fatalf("setting flag unlinked=true: %v", err)
+	}
+	if err := unlinkedFqCmd.Args(unlinkedFqCmd, []string{prefix, r1, r2}); err != nil {
+		t.Errorf("unexpected error: %v", err)
 	}
 }
 
