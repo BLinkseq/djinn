@@ -6,6 +6,8 @@ sidebar:
 ---
 import { Badge } from '@astrojs/starlight/components';
 
+UNDER CONSTRUCTION
+
 In the effort of making it painless to have your data in the preferred standard format, use `standardize`
 to quickly standardize FASTQ and BAM files (i.e. convert them to the [Standard linked-read data format](https://blinkseq.github.io/lastq/)).
 By default, standardization just moves the barcode (wherever it may be)
@@ -29,10 +31,11 @@ will then write a complementary `VX:i` tag to describe barcode validation `0` (i
 Use `--style` to also convert the barcode to a different style (`haplotagging`, `stlfr`, `tellseq`, `10X`),
 which also writes a `conversion.bc` file to the working directory mapping the barcode conversions. Writes to `stdout`.
 
-```bash usage
+```bash
 djinn standardize [--style] PREFIX INPUTS
 ```
 
-```bash example | standardize a bam and change the barcodes to stLFR style
+Example: standardize a bam and change the barco
+```bash
 djinn standardize-bam --style stflr yucca.bam > yucca.std.stlfr.bam
 ```
