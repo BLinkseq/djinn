@@ -3,8 +3,8 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightUiTweaks from 'starlight-ui-tweaks'
 import starlightScrollToTop from 'starlight-scroll-to-top'
-import starlightVersions from 'starlight-versions'
 import starlightSidebarTopics from 'starlight-sidebar-topics'
+import codeblocks from 'starlight-codeblocks';
 
 export default defineConfig({
   site: 'https://blinkseq.github.io/djinn',
@@ -24,6 +24,7 @@ export default defineConfig({
       favicon: '/favicon.png',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/BLinkseq/djinn' }],
       plugins: [
+        codeblocks(),
         starlightUiTweaks({
         navbarLinks: [
            { label: "BLink-seq", href: "https://blinkseq.github.io"},
@@ -59,7 +60,8 @@ export default defineConfig({
               items: [{ autogenerate: { directory: 'sam' } }],
             }],
           }
-        ]),
+        ],
+        ),
       ],
 		}),
 	],
