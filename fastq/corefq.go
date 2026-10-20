@@ -534,5 +534,6 @@ func (c *CoreFq) WriteBam(w *bufio.Writer) error {
 			return err
 		}
 	}
+	w.WriteByte('\n')
 	return nil
 }

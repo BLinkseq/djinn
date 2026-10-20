@@ -3,11 +3,12 @@ package ncbi
 import (
 	"bufio"
 	"fmt"
-	"github.com/blinkseq/djinn/barcodes"
-	"github.com/blinkseq/djinn/fastq"
 	"io"
 	"os"
 	"slices"
+
+	"github.com/blinkseq/djinn/barcodes"
+	"github.com/blinkseq/djinn/fastq"
 
 	"github.com/biogo/hts/bgzf"
 	"github.com/shenwei356/bio/seq"
@@ -37,9 +38,11 @@ func NcbiFq(fqs []string, bcmap string, threads int) error {
 	// file's writer had buffered but not yet flushed.
 	bgzfW := bgzf.NewWriter(os.Stdout, threads) // concurrent blocks
 	bw := bufio.NewWriter(bgzfW)
+	bw.WriteString("@HD	VN:1.6	SO:unsorted	GO:query\n")
 
 	// ── open reader ───────────────────────────────────────────────────────────
-	for _, i := range fqs { // iterate over files
+	// iterate over files
+	for _, i := range fqs {
 		// ---- FQ reader -------------------------
 		fqReader, err := fastx.NewReader(seq.DNA, i, "")
 		if err != nil {
@@ -93,7 +96,7 @@ func NCBIfq10x(fqs []string, bcmap string, threads int) error {
 	// ---- BAM writer -------------------------
 	bgzfW := bgzf.NewWriter(os.Stdout, threads)
 	bw := bufio.NewWriter(bgzfW)
-	bw.WriteString("@HD	VN:1.6	SO:unsorted\n")
+	bw.WriteString("@HD	VN:1.6	SO:unsorted	GO:query\n")
 
 	if len(fqs) == 1 {
 		// Single-end 10X input: no R2 to propagate the barcode onto.
