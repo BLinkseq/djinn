@@ -86,7 +86,7 @@ var convertFqCmd = &cobra.Command{
 	Use:     "convert [options] outFormat prefix file.R1.fq.gz [file.R2.fq.gz]",
 	Short:   "Convert between linked-read FASTQ/barcode formats",
 	Example: "convert 10x gcurratum_as10X gcurratum.R1.fq.gz gcurratum.R2.fq.gz",
-	Long: `Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped), with barcodes specified in BX:Z SAM tag. Writes prefix.R1.fq.gz (and prefix.R2.fq.gz if paired). The first positional argument outFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x). Specifying 10X output will draw barcodes from the official 10X Genomics barcode whitelist.
+	Long: `Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped). Writes prefix.R1.fq.gz (and prefix.R2.fq.gz if paired). The first positional argument outFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x). Specifying 10X output will draw barcodes from the official 10X Genomics barcode whitelist.
 
 | outFormat    | barcode format | example            |
 ------------------------------------------------------
@@ -157,3 +157,5 @@ func init() {
 
 	convertFqCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")
 }
+
+//TODO SET THREADS FOR FASTQ

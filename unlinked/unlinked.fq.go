@@ -3,11 +3,12 @@ package unlinked
 import (
 	"bufio"
 	"fmt"
-	"github.com/blinkseq/djinn/fastq"
 	"io"
 	"maps"
 	"os"
 	"strconv"
+
+	"github.com/blinkseq/djinn/fastq"
 
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
@@ -85,7 +86,7 @@ func getFqCount(infiles []string) (map[string]int, error) {
 	return set, nil
 }
 
-func RemoveUnlinkedFQ(fqs []string, prefix, singletonprefix, barcodecount string) error {
+func RemoveUnlinkedFQ(fqs []string, prefix string, keepSingle bool, barcodecount string) error {
 	// guard against draining stdin when getting barcode counts
 	bcCounts, err := getFqCount(fqs)
 	if err != nil {
@@ -106,7 +107,6 @@ func RemoveUnlinkedFQ(fqs []string, prefix, singletonprefix, barcodecount string
 		writer.Flush()
 		f.Close()
 	}
-	keepSingle := singletonprefix != ""
 
 	// determine what kind of linked-read tech it is, once, from the first file
 	coreParser, _, err := fastq.CoreFqParser(fqs[0])
@@ -132,7 +132,7 @@ func RemoveUnlinkedFQ(fqs []string, prefix, singletonprefix, barcodecount string
 
 		var outfqSingle *xopen.Writer
 		if keepSingle {
-			outfqSingle, err = xopen.Wopen(singletonprefix + ".R" + strconv.Itoa(idx+1) + ".fq.gz")
+			outfqSingle, err = xopen.Wopen(prefix + ".unlinked.R" + strconv.Itoa(idx+1) + ".fq.gz")
 			if err != nil {
 				return err
 			}

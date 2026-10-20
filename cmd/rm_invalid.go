@@ -82,18 +82,7 @@ var invalidFqCmd = &cobra.Command{
 		if err := cobra.MaximumNArgs(3)(cmd, args); err != nil {
 			return err
 		}
-		inv, err := cmd.Flags().GetString("invalid")
-		if err != nil {
-			return err
-		}
-		if inv == args[0] {
-			return fmt.Errorf("File prefix for invalid and valid output cannot be the same.")
-		}
-		err = ensureWritableDir(args[0])
-		if err != nil {
-			return err
-		}
-		err = ensureWritableDir(inv)
+		err := ensureWritableDir(args[0])
 		if err != nil {
 			return err
 		}
@@ -105,7 +94,7 @@ var invalidFqCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		inv, err := cmd.Flags().GetString("invalid")
+		inv, err := cmd.Flags().GetBool("invalid")
 		if err != nil {
 			return err
 		}
@@ -122,5 +111,6 @@ func init() {
 	invalidXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	invalidXamCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to files with this prefix")
 
-	invalidFqCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to files with this prefix")
+	//TODO INVALID SHOULD BE A FLAG, OUTPUT SHOULD BE PREFIX.INVALID....
+	invalidFqCmd.Flags().BoolP("invalid", "i", false, "Write records with invalid barcodes to prefix.invalid")
 }

@@ -30,7 +30,7 @@ var unlinkedXamCmd = &cobra.Command{
 		if err := filecheck(args[0]); err != nil {
 			return err
 		}
-		singles, err := cmd.Flags().GetString("singletons")
+		singles, err := cmd.Flags().GetString("unlinked")
 		if err != nil {
 			return err
 		}
@@ -65,7 +65,7 @@ var unlinkedXamCmd = &cobra.Command{
 		runtime.GOMAXPROCS(safethreads(threads))
 
 		sam, _ := cmd.Flags().GetBool("sam")
-		singles, _ := cmd.Flags().GetString("singletons")
+		singles, _ := cmd.Flags().GetString("unlinked")
 		bcCount, _ := cmd.Flags().GetString("bc-count")
 
 		return unlinked.RemoveUnlinkedXam(args[0], singles, bcCount, sam, threads)
@@ -92,20 +92,7 @@ var unlinkedFqCmd = &cobra.Command{
 		if err := cobra.MaximumNArgs(3)(cmd, args); err != nil {
 			return err
 		}
-		singles, err := cmd.Flags().GetString("singletons")
-		if err != nil {
-			return err
-		}
-		if singles == args[0] {
-			return fmt.Errorf("File prefix for singletons and valid output cannot be the same.")
-		}
-		if singles != "" {
-			err = ensureWritableDir(singles)
-			if err != nil {
-				return err
-			}
-		}
-		err = ensureWritableDir(args[0])
+		err := ensureWritableDir(args[0])
 		if err != nil {
 			return err
 		}
@@ -127,7 +114,7 @@ var unlinkedFqCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		singles, _ := cmd.Flags().GetString("singletons")
+		singles, _ := cmd.Flags().GetBool("unlinked")
 		bcCount, _ := cmd.Flags().GetString("bc-count")
 
 		return unlinked.RemoveUnlinkedFQ(args[1:], args[0], singles, bcCount)
@@ -141,10 +128,11 @@ func init() {
 	//---Command line arguments-------------
 	unlinkedXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
 	unlinkedXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
-	unlinkedXamCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file (optional)")
+	unlinkedXamCmd.Flags().StringP("unlinked", "u", "", "Write valid singleton records to this file (optional)")
 	unlinkedXamCmd.Flags().StringP("bc-count", "b", "", "Write valid barcode counts to this file (optional)")
 
-	unlinkedFqCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to files with this prefix (optional)")
+	//TODO SINGLETONS SHOULD BE A FLAG, OUTPUT SHOULD BE PREFIX.SINGLE....
+	unlinkedFqCmd.Flags().BoolP("unlinked", "u", false, "Write valid singleton records to prefix.unlinked (optional)")
 	unlinkedFqCmd.Flags().StringP("bc-count", "b", "", "Write valid barcode counts to this file (optional)")
 
 }

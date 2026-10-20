@@ -3,6 +3,7 @@ package unlinked
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -87,26 +88,25 @@ func TestRemoveUnlinkedFQ_SplitsSingletonsAndNot(t *testing.T) {
 	writeHapFastq(t, r1, reads)
 
 	prefix := filepath.Join(dir, "out")
-	singlePrefix := filepath.Join(dir, "single")
 	bcCountFile := filepath.Join(dir, "counts.tsv")
 
-	if err := RemoveUnlinkedFQ([]string{r1}, prefix, singlePrefix, bcCountFile); err != nil {
+	if err := RemoveUnlinkedFQ([]string{r1}, prefix, true, bcCountFile); err != nil {
 		t.Fatalf("RemoveUnlinkedFQ returned error: %v", err)
 	}
 
 	mainIDs := readGzFastqIDs(t, prefix+".R1.fq.gz")
-	singleIDs := readGzFastqIDs(t, singlePrefix+".R1.fq.gz")
+	singleIDs := readGzFastqIDs(t, ".unlinked.R1.fq.gz")
 
-	if !contains(mainIDs, "a1") || !contains(mainIDs, "a2") {
+	if !slices.Contains(mainIDs, "a1") || !slices.Contains(mainIDs, "a2") {
 		t.Errorf("expected a1,a2 (non-singleton barcode) in main output, got %v", mainIDs)
 	}
-	if contains(mainIDs, "c1") {
+	if slices.Contains(mainIDs, "c1") {
 		t.Errorf("singleton read c1 should not be in main output, got %v", mainIDs)
 	}
-	if !contains(singleIDs, "c1") {
+	if !slices.Contains(singleIDs, "c1") {
 		t.Errorf("expected c1 (singleton barcode) in singleton output, got %v", singleIDs)
 	}
-	if contains(mainIDs, "g1") || contains(singleIDs, "g1") {
+	if slices.Contains(mainIDs, "g1") || slices.Contains(singleIDs, "g1") {
 		t.Errorf("invalid-barcode read g1 should be dropped entirely, got main=%v single=%v", mainIDs, singleIDs)
 	}
 
@@ -126,18 +126,18 @@ func TestRemoveUnlinkedFQ_NoSingletonOutput(t *testing.T) {
 	writeHapFastq(t, r1, reads)
 
 	prefix := filepath.Join(dir, "out")
-	if err := RemoveUnlinkedFQ([]string{r1}, prefix, "", ""); err != nil {
+	if err := RemoveUnlinkedFQ([]string{r1}, prefix, false, ""); err != nil {
 		t.Fatalf("RemoveUnlinkedFQ returned error: %v", err)
 	}
 	mainIDs := readGzFastqIDs(t, prefix+".R1.fq.gz")
-	if !contains(mainIDs, "a1") || contains(mainIDs, "c1") {
+	if !slices.Contains(mainIDs, "a1") || slices.Contains(mainIDs, "c1") {
 		t.Errorf("unexpected main output contents: %v", mainIDs)
 	}
 }
 
 func TestRemoveUnlinkedFQ_MissingFile(t *testing.T) {
 	dir := t.TempDir()
-	err := RemoveUnlinkedFQ([]string{"/nonexistent/file.fq"}, filepath.Join(dir, "out"), "", "")
+	err := RemoveUnlinkedFQ([]string{"/nonexistent/file.fq"}, filepath.Join(dir, "out"), false, "")
 	if err == nil {
 		t.Fatal("expected an error for a nonexistent input file")
 	}

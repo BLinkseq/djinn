@@ -2,17 +2,17 @@ package invalid
 
 import (
 	"fmt"
-	"github.com/blinkseq/djinn/fastq"
 	"io"
 	"strconv"
+
+	"github.com/blinkseq/djinn/fastq"
 
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
 	"github.com/shenwei356/xopen"
 )
 
-func FilterInvalidFQ(fqs []string, prefix, invalidprefix string) error {
-	keepInvalid := invalidprefix != ""
+func FilterInvalidFQ(fqs []string, prefix string, keepInvalid bool) error {
 	seq.ValidateSeq = false
 
 	// determine what kind of linked-read tech it is, once, from the first file
@@ -39,7 +39,7 @@ func FilterInvalidFQ(fqs []string, prefix, invalidprefix string) error {
 
 		var outfqInv *xopen.Writer
 		if keepInvalid {
-			outfqInv, err = xopen.Wopen(invalidprefix + ".R" + strconv.Itoa(idx+1) + ".fq.gz")
+			outfqInv, err = xopen.Wopen(prefix + ".invalid.R" + strconv.Itoa(idx+1) + ".fq.gz")
 			if err != nil {
 				return err
 			}
