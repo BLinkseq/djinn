@@ -1,0 +1,49 @@
+---
+title: Barcode statistics for a FASTQ file
+sidebar:
+  order: 4
+  label: stats
+---
+import { Badge } from '@astrojs/starlight/components';
+
+If you want a quick read on how clean your linked-read barcodes are, use `stats`. It reports how many
+reads carry a barcode, how many of those barcodes are valid, and, for the barcodes that aren't, which
+position tends to go wrong. Writes to `stdout`.
+
+Format is auto-detected from the first 100 records for haplotagging, TELLseq, and stLFR, or you can
+name it with `--platform` to skip detection. 10X data cannot be auto-detected this way (its barcode is
+just the first 16 bases of R1, with nothing marking it as a barcode), so 10X input requires `--bc-list`
+instead: either a path to your own whitelist, or the literal value `10x` to use the official 10X
+Genomics whitelist embedded in Djinn.
+
+## Usage
+```bash
+djinn fastq stats [options] file.fq.gz
+```
+
+Example
+```bash
+djinn fastq stats curratum.R1.fq.gz > curratum.R1.stats
+```
+
+## Options
+| argument            | description                                                                                  |
+|:--------------------|:----------------------------------------------------------------------------------------------|
+| `file.fq.gz`        | FASTQ file <Badge text="required" variant="tip" />                                            |
+| `-p` `--platform`   | Linked-read technology: `haplotagging`, `stlfr` or `tellseq` (default: detect from the first 100 reads) |
+| `-b` `--bc-list`    | Valid barcode list, or literal `10x` for the embedded official whitelist <Badge text="required: for 10X Genomics input" variant="tip" /> |
+| `-@` `--threads`    | Threads to use (default: 2)                                                                   |
+
+## Output
+
+| column             | description                                                            |
+|:-------------------|:-------------------------------------------------------------------------|
+| `Reads`            | total sequences in the file                                            |
+| `Barcodes`         | reads that carry a linked-read barcode                                 |
+| `Barcodes_Valid`   | barcodes that are valid                                                 |
+| `Barcodes_Invalid` | barcodes that are not valid                                             |
+
+followed by one line per barcode position that can go wrong, with the number of barcodes that were bad
+at that position: haplotagging segments `A`, `C`, `B`, `D` (e.g. a segment reading `00`), stLFR parts
+`1`-`3` (a part reading `0`), TELLseq bases `1`-`18` (an `N`), or 10X bases `1`-`16` (an `N`). A barcode
+with several bad positions adds to each of them.
