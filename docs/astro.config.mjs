@@ -16,6 +16,11 @@ export default defineConfig({
       logo: { src: '/src/assets/logo.svg'},
       favicon: '/favicon.png',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/BLinkseq/djinn' }],
+			lastUpdated: true,
+      pagination: false,
+      editLink: {
+        baseUrl: 'https://github.com/blinkseq/djinn/edit/main/docs/',
+      },
       plugins: [
         codeblocks(),
         starlightUiTweaks({
