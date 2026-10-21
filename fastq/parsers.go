@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
@@ -65,13 +64,13 @@ func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), st
 	}
 	switch {
 	case h > 0:
-		fmt.Fprintln(os.Stderr, "Format detected: Haplotagging")
+		//fmt.Fprintln(os.Stderr, "Format detected: Haplotagging")
 		return Haplotag2Corefq, "haplotagging", nil
 	case s > 0:
-		fmt.Fprintln(os.Stderr, "Format detected: stLFR")
+		//fmt.Fprintln(os.Stderr, "Format detected: stLFR")
 		return Stlfr2Corefq, "stlfr", nil
 	case t > 0:
-		fmt.Fprintln(os.Stderr, "Format detected: TELL-seq")
+		//fmt.Fprintln(os.Stderr, "Format detected: TELL-seq")
 		return Tellseq2Corefq, "tellseq", nil
 	default:
 		return nil, "", nil

@@ -61,7 +61,8 @@ func NcbiFq(fqs []string, bcmap string, threads int) error {
 	}
 
 	// ── open reader ───────────────────────────────────────────────────────────
-	for _, i := range fqs { // iterate over files
+	// iterate over files
+	for _, i := range fqs {
 		// ---- FQ reader -------------------------
 		fqReader, err := fastx.NewReader(seq.DNA, i, "")
 		if err != nil {
