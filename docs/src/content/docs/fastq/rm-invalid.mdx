@@ -10,6 +10,13 @@ You may be interested in retaining only "useful" linked reads, that is, reads wi
 Using `rm-invalid` will remove alignment records invalid barcodes. If you want to keep a separate
 file (or files) of records with invalid barcodes use the `--invalid` flag.
 
+Format is auto-detected from the first 100 records for haplotagging, TELLseq, and stLFR. 10X data
+cannot be auto-detected this way (its barcode is just the first 16 bases of R1, with nothing marking
+it as a barcode), so filtering 10X data requires `--bc-list`: either a path to your own whitelist,
+or the literal value `10x` to use the official 10X Genomics whitelist embedded in Djinn. A 10X R1
+read whose first 16 bases don't match any whitelist entry has no barcode at all and is treated as
+invalid.
+
 ## Usage
 ```bash
 djinn sam rm-invalid [--invalid] PREFIX file.R1.fq.gz [file.R2.fq.gz]
@@ -26,3 +33,4 @@ djinn sam rm-invalid --invalid echinda.valid echidna.R*.fq.gz
 | `PREFIX`          |  output filename prefix   <Badge text="required" variant="tip" />    |
 | `file.R*.fq.gz`   | FASTQ file or file pair <Badge text="required" variant="tip" />                                       |
 | `-i` `--invalid` | output records with invalid barcodes to `PREFIX.invalid.*`                                 |
+| `-b` `--bc-list`  | Valid barcode list, or literal `10x` for the embedded official whitelist <Badge text="required: for 10X Genomics input" variant="tip" /> |

@@ -14,7 +14,10 @@ in the process.
 
 Sorting is done using a `samtools` style k-way merge, where reads (or read pairs) are inlined
 with an intermediate format and cast across several temporary files located at `--tmp-dir`, where
-they are then merged back together. Using the `--standardize` flag <Badge text="recommended" variant="success" /> will result in sorted
+they are then merged back together. Format is auto-detected from the first 100 records for
+haplotagging, TELLseq, and stLFR; 10X cannot be auto-detected this way (its barcode is just the
+first 16 bases of R1, with nothing marking it as a barcode), so sorting 10X data requires
+`--bc-list` to tell Djinn which 16-base sequences are real barcodes. Using the `--standardize` flag <Badge text="recommended" variant="success" /> will result in sorted
 [standard format](https://blinkseq.github.io/lastq/) data that, among other things,
 is ready for use in [arachne](https://github.com/blinkseq/arachne).
 
@@ -40,7 +43,7 @@ When input is a FASTQ file pair, the reads are expected to be synced between R1 
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          |  output filename prefix   <Badge text="required" variant="tip" />    |
 | `file.R*.fq.gz`   | FASTQ file or file pair   <Badge text="required" variant="tip" />      |
-| `-b` `--bc-map`  | valid barcode list <Badge text="required: for 10X Genomics input" variant="tip" />   |
+| `-b` `--bc-list`  | valid barcode list, or literal `10x` for the embedded official whitelist <Badge text="required: for 10X Genomics input" variant="tip" />   |
 | `-s` `--standardize`  | output using standardized BX:Z:/VX:i: tags instead of the detected input format                                                |
 | `-@` `--threads`  | treads to use (default: 2)                                                  |
 | `-t` `--tmp-prefix` | folder for temporary files |

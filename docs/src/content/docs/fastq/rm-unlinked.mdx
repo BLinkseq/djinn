@@ -12,6 +12,11 @@ to isolate records with meaningful linked-read information. If you want to keep 
 file (or files) of unlinked/singleton records, use the `--unlinked` flag. Barcodes are counted
 per read-pair or unpair read.
 
+Format is auto-detected from the first 100 records for haplotagging, TELLseq, and stLFR. 10X data
+cannot be auto-detected this way (its barcode is just the first 16 bases of R1, with nothing marking
+it as a barcode), so filtering 10X data requires `--bc-list`: either a path to your own whitelist,
+or the literal value `10x` to use the official 10X Genomics whitelist embedded in Djinn.
+
 ## Usage
 
 ```bash
@@ -28,5 +33,6 @@ djinn fastq rm-unlinked --unlinked hyena.clean hyena.R*.fq.gz
 | :------------------ | :--------------------------------------------------------------------------------- |
 | `PREFIX`          |  output filename prefix   <Badge text="required" variant="tip" />    |
 | `file.R*.fq.gz`             | FASTQ file or file pair <Badge text="required" variant="tip" />                               |
-| `-b` `--bc-count`   | write valid barcode counts to this file <Badge text="optional" variant="note" />    |
+| `--bc-count`   | write valid barcode counts to `PREFIX.count` <Badge text="optional" variant="note" />    |
 | `-u` `--unlinked`   | write valid singleton records to `PREFIX.unlinked`                                |
+| `-b` `--bc-list`  | Valid barcode list, or literal `10x` for the embedded official whitelist <Badge text="required: for 10X Genomics input" variant="tip" /> |

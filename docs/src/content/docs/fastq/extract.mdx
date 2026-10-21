@@ -8,6 +8,12 @@ import { Badge } from '@astrojs/starlight/components';
 
 To get a list of all the unique barcodes in your data, use `extract`. Writes to `stdout`.
 
+Format is auto-detected from the first 100 records for haplotagging, TELLseq, and stLFR. 10X data
+cannot be auto-detected this way (its barcode is just the first 16 bases of R1, with nothing marking
+it as a barcode), so extracting 10X barcodes requires `--bc-list`: either a path to your own
+whitelist, or the literal value `10x` to use the official 10X Genomics whitelist embedded in Djinn.
+For 10X input, only the first file (R1) is read, since that's the only place the barcode lives.
+
 ## Usage
 ```bash
 djinn fastq extract file.R1.fq.gz [file.R2.fq.gz]
@@ -23,3 +29,4 @@ djinn fastq extract -i sample1.F.fq.gz sample1.R.fq.gz > sample1.bc
 |:------------------|:------------------------------------------------------------------------------|
 | `file.R*fq.gz`    | FASTQ file or file pair <Badge text="required" variant="tip" />                          |
 | `-i` `--invalid`  | Include invalid barcodes                                                      |
+| `-b` `--bc-list`  | Valid barcode list, or literal `10x` for the embedded official whitelist <Badge text="required: for 10X Genomics input" variant="tip" /> |

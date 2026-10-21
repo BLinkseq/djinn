@@ -9,10 +9,13 @@ import { Badge } from '@astrojs/starlight/components';
 
 
 If you need to convert between the linked-read technologies' distinct FASTQ formats and their
-barcoding systems, use `convert`. It auto-detects the input format as one of 10X, haplotagging, TELLseq, or stLFR,
-and converts it to the format provided as the `TARGET` positional argument. If the
-input data is in 10X format, where the barcode is usually the first 16 bases in the R1 sequence,
-you will need to provide a `--bc-map` file that lets Djinn know what barcodes to look for.
+barcoding systems, use `convert`. It auto-detects the input format as one of haplotagging, TELLseq, or stLFR
+by inspecting the first 100 records. 10X cannot be auto-detected this way (its barcode is just the
+first 16 bases of the R1 sequence, with nothing marking it as a barcode), so converting **from** 10X
+requires `--bc-list` to tell Djinn which 16-base sequences are real barcodes: either a path to your
+own whitelist file, or the literal value `10x` to use the official 10X Genomics barcode whitelist
+embedded in Djinn. Converting **to** 10X draws new barcodes from that same embedded whitelist and
+needs no `--bc-list` at all.
 In all cases, a file will be created with the barcode conversion map.
 
 ## Usage
@@ -36,11 +39,11 @@ convert 10x gcurratum_as10X gcurratum.R1.fq.gz gcurratum.R2.fq.gz
 | `PREFIX`         |  output filename prefix   <Badge text="required" variant="tip" />    |
 | `TARGET`         | output barcode and FASTQ style: `10x`, `haplotagging`, `tellseq`, `stlfr`, `standard` |
 | `file.R*.fq.gz`  | FASTQ file or file pair <Badge text="required" variant="tip" />                                       |
-| `-b` `--bc-map`  | Valid barcode list <Badge text="required: for 10X Genomics input" variant="tip" />   |
+| `-b` `--bc-list`  | Valid barcode list (or literal `10x` for the embedded whitelist) <Badge text="required: for 10X Genomics input" variant="tip" />   |
 
 
 <details>
-    <summary> example `--bc-map` file </summary>
+    <summary> example `--bc-list` file </summary>
 ```
 ATGGAAGCCGTAGTTA
 ACGGAAGCCGTAGTTC
