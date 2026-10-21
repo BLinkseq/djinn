@@ -101,17 +101,6 @@ var unlinkedFqCmd = &cobra.Command{
 				return err
 			}
 		}
-		bcCount, err := cmd.Flags().GetString("bc-count")
-		if err != nil {
-			return err
-		}
-		if bcCount != "" {
-			err = ensureWritableDir(bcCount)
-			if err != nil {
-				return err
-			}
-		}
-
 		mapfile, err := cmd.Flags().GetString("bc-list")
 		if err != nil {
 			return err
@@ -149,7 +138,7 @@ func init() {
 
 	//TODO SINGLETONS SHOULD BE A FLAG, OUTPUT SHOULD BE PREFIX.SINGLE....
 	unlinkedFqCmd.Flags().BoolP("unlinked", "u", false, "Write valid singleton records to prefix.unlinked (optional)")
-	unlinkedFqCmd.Flags().BoolP("bc-count", "b", false, "Write valid barcode counts to prefix.counts (optional)")
+	unlinkedFqCmd.Flags().Bool("bc-count", false, "Write valid barcode counts to prefix.counts (optional)")
 	unlinkedFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
 	unlinkedFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

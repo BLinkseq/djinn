@@ -63,6 +63,17 @@ var countFqCmd = &cobra.Command{
 				return err
 			}
 		}
+		mapfile, err := cmd.Flags().GetString("bc-list")
+		if err != nil {
+			return err
+		}
+		switch mapfile {
+		case "", "10x", "10X": // skip check
+		default:
+			if err := filecheck(mapfile); err != nil {
+				return err
+			}
+		}
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -83,7 +94,7 @@ func init() {
 	countXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 	countXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
-	convertFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	countFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
 	countFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 	countFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

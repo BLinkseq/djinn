@@ -23,6 +23,12 @@ files into a single unaligned BAM file without any data loss (and also free up d
     you risk losing the barcode forever!
 </Aside>
 
+Format is auto-detected from the first 100 records for haplotagging, TELLseq, and stLFR. 10X cannot be
+auto-detected this way (its barcode is just the first 16 bases of R1, with nothing marking it as a
+barcode), so converting 10X FASTQ to BAM requires `--bc-list` to tell Djinn which 16-base sequences
+are real barcodes -- either a path to your own whitelist, or the literal value `10x` to use the
+official 10X Genomics whitelist embedded in Djinn.
+
 
 ## Usage
 ```bash
@@ -43,5 +49,5 @@ samtools import -O BAM -T "*" -1 file.R1.fq file.R2.fq > out.bam
 | argument         | description                                                                |
 |:-----------------|:---------------------------------------------------------------------------|
 | `file.R*.fq.gz`  | FASTQ file or file pair <Badge text="required" variant="tip" />            |
-| `-b` `--bc-map`  | Valid barcode list <Badge text="required: for 10X Genomics input" variant="tip" />                   |
+| `-b` `--bc-list`  | Valid barcode list, or literal `10x` for the embedded official whitelist <Badge text="required: for 10X Genomics input" variant="tip" />                   |
 | `-t` `--threads` | Threads to use (default: 2)                                      |

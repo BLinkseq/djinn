@@ -1,0 +1,54 @@
+---
+title: Linked-read metrics per molecule
+sidebar:
+  order: 4
+  label: stats
+---
+import { Badge, Aside } from '@astrojs/starlight/components';
+
+Once your reads are aligned, `stats` reports per-molecule metrics: how many reads a barcode has on a
+contig, where they start and end, how many bases aligned, and how well the molecule is covered. A
+"molecule" is one barcode's reads on one contig; use `--distance-threshold` to split a barcode's reads
+into separate molecules (`BARCODE-1`, `BARCODE-2`, ...) when the gap between consecutive reads is too
+large, the same splitting `deconvolve` does, without writing a new BAM. Writes a table to `stdout`.
+
+Barcodes come from the `BX:Z` tag (or a TELLseq/stLFR-style read name), and a barcode is valid if the
+`VX:i` tag says so, or, when there is no `VX:i` tag, if the barcode itself is valid. Reads without a
+valid barcode are pooled into one `invalid` line per contig.
+
+<Aside type="caution">
+    **Input must be coordinate-sorted** (or `-` to read from stdin), since the whole method relies on
+    that order to know when a molecule is finished.
+</Aside>
+
+## Usage
+```bash
+djinn sam stats [options] file.bam
+```
+
+Example
+```bash
+djinn sam stats -d 50000 -@ 4 curratum.bam > curratum.molecules.tsv
+```
+
+## Options
+| argument                      | description                                                                                         |
+|:------------------------------|:------------------------------------------------------------------------------------------------------|
+| `file.bam`                    | coordinate-sorted SAM/BAM file, or `-` for stdin <Badge text="required" variant="tip" />                  |
+| `-d` `--distance-threshold`   | distance (bp) that splits a barcode's reads into separate molecules, where `0` skips splitting (default: 50000) |
+| `-@` `--threads`              | Threads to use (default: 2)                                                                            |
+
+## Output
+
+| column             | description                                                           |
+|:-------------------|:------------------------------------------------------------------------|
+| `contig`           | chromosome/contig the molecule is on                                  |
+| `molecule`         | the barcode, suffixed with `-N` if split by `--distance-threshold`    |
+| `reads`            | number of reads sharing the barcode on this molecule                  |
+| `start`            | leftmost aligned position                                              |
+| `end`              | rightmost aligned position                                             |
+| `length_inferred`  | `end - start`                                                          |
+| `aligned_bp`       | total aligned bases across the molecule's reads                       |
+| `insert_len`       | inferred insert length                                                 |
+| `coverage_bp`      | `aligned_bp` / `length_inferred`                                       |
+| `coverage_inserts` | inferred-insert coverage of the molecule                              |

@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/blinkseq/djinn/barcodes"
 	"github.com/blinkseq/djinn/fastq"
 
 	"github.com/shenwei356/bio/seq"
@@ -77,23 +76,11 @@ func ExtractFQ(fqs []string, invalid bool, bcmap string) error {
 
 func Extract10XFQ(fqs []string, invalid bool, bcmap string) error {
 	seq.ValidateSeq = false
-	var bclist map[string]struct{}
-	var err error
-
-	switch bcmap {
-	case "10X", "10x":
-		bclist, err = barcodes.LoadTenXSet()
-		if err != nil {
-			return err
-		}
-	default:
-		bclist, err = barcodes.LoadTenXFromFile(bcmap)
-		if err != nil {
-			return err
-		}
+	bclist, err := fastq.Load10X(bcmap)
+	if err != nil {
+		return err
 	}
 
-	seq.ValidateSeq = false
 	// ── open barcode writer ───────────────────────────────────────────────────────────
 	writer := bufio.NewWriter(os.Stdout)
 	defer writer.Flush()

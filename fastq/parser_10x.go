@@ -60,7 +60,7 @@ func TenXR22Corefq(rec *fastx.Record) (core CoreFq) {
 }
 
 // Load a 10X barcode whitelist. If bcmap is '10x' or '10X', loads the official list
-// embedded in djinn, otherwise rease the bcmap file
+// embedded in djinn, otherwise reads the bcmap file
 func Load10X(bcmap string) (barcodeMap map[string]struct{}, err error) {
 	switch bcmap {
 	case "10X", "10x":

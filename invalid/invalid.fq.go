@@ -112,6 +112,17 @@ func FilterInvalid10XFQ(fqs []string, prefix string, keepInvalid bool, bcmap str
 	}
 	defer R1Writer.Close()
 
+	// Invalid records go to their own prefix.invalid.R*.fq.gz files, same
+	// as the non-10X path -- not mixed back into the main output.
+	var R1WriterInv *xopen.Writer
+	if keepInvalid {
+		R1WriterInv, err = xopen.Wopen(prefix + ".invalid.R1.fq.gz")
+		if err != nil {
+			return err
+		}
+		defer R1WriterInv.Close()
+	}
+
 	if len(fqs) == 1 {
 		// Single-end 10X input: no R2 to propagate the barcode onto.
 		for {
@@ -125,7 +136,7 @@ func FilterInvalid10XFQ(fqs []string, prefix string, keepInvalid bool, bcmap str
 			r1core, ok := fastq.TenXR12Corefq(_r1, bclist)
 			if !ok || !r1core.Valid {
 				if keepInvalid {
-					r1core.ToTenX(R1Writer.Writer)
+					r1core.ToTenX(R1WriterInv.Writer)
 				}
 				continue
 			}
@@ -144,6 +155,15 @@ func FilterInvalid10XFQ(fqs []string, prefix string, keepInvalid bool, bcmap str
 		}
 		defer R2Writer.Close()
 
+		var R2WriterInv *xopen.Writer
+		if keepInvalid {
+			R2WriterInv, err = xopen.Wopen(prefix + ".invalid.R2.fq.gz")
+			if err != nil {
+				return err
+			}
+			defer R2WriterInv.Close()
+		}
+
 		var r1core, r2core fastq.CoreFq
 
 	Loop:
@@ -158,7 +178,7 @@ func FilterInvalid10XFQ(fqs []string, prefix string, keepInvalid bool, bcmap str
 				r1core, ok = fastq.TenXR12Corefq(_r1, bclist)
 				if !ok || !r1core.Valid {
 					if keepInvalid {
-						r1core.ToTenX(R1Writer.Writer)
+						r1core.ToTenX(R1WriterInv.Writer)
 					}
 					continue
 				}
@@ -177,19 +197,25 @@ func FilterInvalid10XFQ(fqs []string, prefix string, keepInvalid bool, bcmap str
 				}
 			case nil:
 				r2core = fastq.TenXR22Corefq(_r2)
-				// check if R1 exists and match the seq ID
+				// check if R1 exists and match the seq ID; a record with
+				// no matching R1 (should only happen if the files are
+				// mismatched/truncated) has no barcode info and is
+				// therefore treated the same as an invalid barcode.
+				valid := false
 				if r1err == nil {
 					if ok := slices.Equal(r1core.ID, r2core.ID); !ok {
 						return fmt.Errorf("Misaligned R1 and R2 records. The 10X format only stores the barcode at the beginning of read 1, meaning Read 2 must have the same sequence ID as Read 1 to reliably assign a barcode to Read 2, but they do not match.\nRead 1:\n%s\nRead 2:\n%s", r1core.ID, r2core.ID)
 					}
 					r2core.Barcode = r1core.Barcode
-					if !r1core.Valid {
-						if keepInvalid {
-							r2core.ToTenX(R2Writer.Writer)
-						}
-						continue
-					}
+					valid = r1core.Valid
 				}
+				if !valid {
+					if keepInvalid {
+						r2core.ToTenX(R2WriterInv.Writer)
+					}
+					continue
+				}
+				r2core.ToTenX(R2Writer.Writer)
 			default:
 				return r2err
 			}
