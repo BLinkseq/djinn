@@ -1,4 +1,4 @@
-name: Release Versioned Binaries
+name: Create Versioned Release
 
 on:
   push:
