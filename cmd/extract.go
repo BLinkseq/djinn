@@ -96,7 +96,7 @@ func init() {
 	extractXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 	extractXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
-	convertFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	extractFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
 	extractFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 	extractFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }
