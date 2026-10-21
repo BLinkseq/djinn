@@ -6,7 +6,6 @@ import (
 	"runtime"
 
 	"github.com/blinkseq/djinn/deconvolve"
-	"github.com/blinkseq/djinn/xam"
 
 	"github.com/spf13/cobra"
 )
@@ -57,9 +56,6 @@ var deconvolveXamCmd = &cobra.Command{
 		}
 		asSam, err := cmd.Flags().GetBool("sam")
 		if err != nil {
-			return err
-		}
-		if err := xam.BamNotStdout(asSam); err != nil {
 			return err
 		}
 		return deconvolve.DeconvolveXam(args[0], distance, asSam, threads)
