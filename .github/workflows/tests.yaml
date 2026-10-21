@@ -126,5 +126,5 @@ jobs:
       - name: sam stats
         if: success() || failure()
         run: |
-          djinn sam stats sorted.bam &&\
-          djinn sam deconvolve -d 50000 sorted.bam 2>/dev/null | djinn sam stats -
+          djinn sam stats test/s1.sam &&\
+          djinn sam deconvolve -d 50000 sorted.bam 2>/dev/null | samtools sort | djinn sam stats -
