@@ -81,7 +81,9 @@ var sortFqCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if bcMap != "" {
+		switch bcMap {
+		case "", "10x", "10X": // skip check
+		default:
 			if err := filecheck(bcMap); err != nil {
 				return err
 			}

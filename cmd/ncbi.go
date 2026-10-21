@@ -69,8 +69,12 @@ var ncbiFq2XamCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if mapfile != "" && filecheck(mapfile) != nil {
-			return err
+		switch mapfile {
+		case "", "10x", "10X": // skip check
+		default:
+			if filecheck(mapfile) != nil {
+				return err
+			}
 		}
 		return nil
 	},
