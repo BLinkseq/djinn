@@ -7,7 +7,35 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/biogo/hts/bam"
+	"github.com/biogo/hts/sam"
 )
+
+// decodeBamRecords parses out as a real BAM stream and returns every
+// record. It fails the test outright if out isn't valid BAM -- a bare
+// len(out) != 0 check would pass even on a headerless/malformed stream.
+func decodeBamRecords(t *testing.T, out []byte) []*sam.Record {
+	t.Helper()
+	br, err := bam.NewReader(bytes.NewReader(out), 1)
+	if err != nil {
+		t.Fatalf("output is not valid BAM: %v", err)
+	}
+	defer br.Close()
+
+	var recs []*sam.Record
+	for {
+		rec, err := br.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("reading BAM record: %v", err)
+		}
+		recs = append(recs, rec)
+	}
+	return recs
+}
 
 const ncbiTenXBC = "AAAACCCCGGGGTTTT" // 16nt
 
@@ -80,8 +108,22 @@ func TestNCBIfq10x_SingleFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NCBIfq10x: %v", err)
 	}
-	if len(out) == 0 {
-		t.Error("expected non-empty BAM output for single-end 10X input")
+	recs := decodeBamRecords(t, out)
+	if len(recs) != 1 {
+		t.Fatalf("got %d records, want 1", len(recs))
+	}
+	rec := recs[0]
+	if rec.Name != "read1" {
+		t.Errorf("Name = %q, want %q", rec.Name, "read1")
+	}
+	if rec.Flags&sam.Unmapped == 0 {
+		t.Errorf("Flags = %v, want Unmapped set", rec.Flags)
+	}
+	if rec.Flags&sam.Paired != 0 {
+		t.Errorf("Flags = %v, want Paired unset for single-end input", rec.Flags)
+	}
+	if got := string(rec.Seq.Expand()); got != "ACGT" {
+		t.Errorf("Seq = %q, want %q (barcode must not leak into the stored sequence)", got, "ACGT")
 	}
 }
 
@@ -89,8 +131,8 @@ func TestNCBIfq10x_PairedFiles(t *testing.T) {
 	dir := t.TempDir()
 	r1 := filepath.Join(dir, "r1.fq")
 	r2 := filepath.Join(dir, "r2.fq")
-	writeNcbiTenXFastq(t, r1, "read1", "ACGT")
-	writeNcbiPlainFastq(t, r2, "read1", "TGCA")
+	writeNcbiTenXFastq(t, r1, "read1/1", "ACGT")
+	writeNcbiPlainFastq(t, r2, "read1/2", "TGCA")
 	wl := writeNcbiTenXWhitelist(t, dir)
 
 	out, err := captureStdoutBytes(t, func() error {
@@ -99,8 +141,22 @@ func TestNCBIfq10x_PairedFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NCBIfq10x: %v", err)
 	}
-	if len(out) == 0 {
-		t.Error("expected non-empty BAM output for paired 10X input")
+	recs := decodeBamRecords(t, out)
+	if len(recs) != 2 {
+		t.Fatalf("got %d records, want 2", len(recs))
+	}
+	r1rec, r2rec := recs[0], recs[1]
+	if r1rec.Flags&sam.Paired == 0 || r1rec.Flags&sam.Read1 == 0 {
+		t.Errorf("R1 Flags = %v, want Paired|Read1 set", r1rec.Flags)
+	}
+	if r2rec.Flags&sam.Paired == 0 || r2rec.Flags&sam.Read2 == 0 {
+		t.Errorf("R2 Flags = %v, want Paired|Read2 set", r2rec.Flags)
+	}
+	if got := string(r1rec.Seq.Expand()); got != "ACGT" {
+		t.Errorf("R1 Seq = %q, want %q", got, "ACGT")
+	}
+	if got := string(r2rec.Seq.Expand()); got != "TGCA" {
+		t.Errorf("R2 Seq = %q, want %q", got, "TGCA")
 	}
 }
 
@@ -131,8 +187,29 @@ func TestNcbiFq_SingleFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NcbiFq: %v", err)
 	}
-	if len(out) == 0 {
-		t.Error("expected non-empty BAM output for single-end haplotagging input")
+	recs := decodeBamRecords(t, out)
+	if len(recs) != 1 {
+		t.Fatalf("got %d records, want 1", len(recs))
+	}
+	rec := recs[0]
+	if rec.Name != "read1" {
+		t.Errorf("Name = %q, want %q", rec.Name, "read1")
+	}
+	if got := string(rec.Seq.Expand()); got != "ACGT" {
+		t.Errorf("Seq = %q, want %q", got, "ACGT")
+	}
+	var bx *sam.Aux
+	for _, a := range rec.AuxFields {
+		if a.Tag() == sam.NewTag("BX") {
+			bx = &a
+			break
+		}
+	}
+	if bx == nil {
+		t.Fatalf("expected a BX aux tag, got %v", rec.AuxFields)
+	}
+	if got := bx.Value(); got != "A01C02B03D04" {
+		t.Errorf("BX value = %v, want %q", got, "A01C02B03D04")
 	}
 }
 
@@ -149,7 +226,14 @@ func TestNcbiFq_PairedFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NcbiFq: %v", err)
 	}
-	if len(out) == 0 {
-		t.Error("expected non-empty BAM output for paired haplotagging input")
+	recs := decodeBamRecords(t, out)
+	if len(recs) != 2 {
+		t.Fatalf("got %d records, want 2", len(recs))
+	}
+	if got := string(recs[0].Seq.Expand()); got != "ACGT" {
+		t.Errorf("R1 Seq = %q, want %q", got, "ACGT")
+	}
+	if got := string(recs[1].Seq.Expand()); got != "TGCA" {
+		t.Errorf("R2 Seq = %q, want %q", got, "TGCA")
 	}
 }

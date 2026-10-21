@@ -95,7 +95,7 @@ func TestRemoveUnlinkedFQ_SplitsSingletonsAndNot(t *testing.T) {
 	}
 
 	mainIDs := readGzFastqIDs(t, prefix+".R1.fq.gz")
-	singleIDs := readGzFastqIDs(t, ".unlinked.R1.fq.gz")
+	singleIDs := readGzFastqIDs(t, prefix+".unlinked.R1.fq.gz")
 
 	if !slices.Contains(mainIDs, "a1") || !slices.Contains(mainIDs, "a2") {
 		t.Errorf("expected a1,a2 (non-singleton barcode) in main output, got %v", mainIDs)
