@@ -34,7 +34,7 @@ func TestExtractFQHaplotagging(t *testing.T) {
 
 	var err error
 	out := captureStdout(t, func() {
-		err = ExtractFQ([]string{fq}, false)
+		err = ExtractFQ([]string{fq}, false, "")
 	})
 	if err != nil {
 		t.Fatalf("ExtractFQ: %v", err)
@@ -59,7 +59,7 @@ func TestExtractFQIncludeInvalid(t *testing.T) {
 
 	var err error
 	out := captureStdout(t, func() {
-		err = ExtractFQ([]string{fq}, true)
+		err = ExtractFQ([]string{fq}, true, "")
 	})
 	if err != nil {
 		t.Fatalf("ExtractFQ: %v", err)
@@ -84,7 +84,7 @@ func TestExtractFQMultipleFiles(t *testing.T) {
 
 	var err error
 	out := captureStdout(t, func() {
-		err = ExtractFQ([]string{fq1, fq2}, false)
+		err = ExtractFQ([]string{fq1, fq2}, false, "")
 	})
 	if err != nil {
 		t.Fatalf("ExtractFQ: %v", err)
@@ -96,8 +96,79 @@ func TestExtractFQMultipleFiles(t *testing.T) {
 }
 
 func TestExtractFQBadFirstFile(t *testing.T) {
-	err := ExtractFQ([]string{"/nonexistent/path/reads.fq"}, false)
+	err := ExtractFQ([]string{"/nonexistent/path/reads.fq"}, false, "")
 	if err == nil {
 		t.Fatal("expected error for nonexistent input file, got nil")
+	}
+}
+
+func writeTenXFastqExtract(t *testing.T, path string, ids []string, barcode string) {
+	t.Helper()
+	var sb strings.Builder
+	for _, id := range ids {
+		seq := barcode + "ACGTACGTAC"
+		sb.WriteString("@" + id + "\n" + seq + "\n+\n" + strings.Repeat("I", len(seq)) + "\n")
+	}
+	if err := os.WriteFile(path, []byte(sb.String()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestExtract10XFQ(t *testing.T) {
+	dir := t.TempDir()
+	r1 := filepath.Join(dir, "r1.fq")
+	wl := filepath.Join(dir, "whitelist.txt")
+	if err := os.WriteFile(wl, []byte("AAAACCCCGGGGTTTT\nTTTTGGGGCCCCAAAA\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var sb strings.Builder
+	sb.WriteString("@read1\nAAAACCCCGGGGTTTTACGTACGTAC\n+\nIIIIIIIIIIIIIIIIIIIIIIIIII\n")
+	sb.WriteString("@read2\nAAAACCCCGGGGTTTTACGTACGTAC\n+\nIIIIIIIIIIIIIIIIIIIIIIIIII\n") // duplicate barcode
+	sb.WriteString("@read3\nTTTTGGGGCCCCAAAAACGTACGTAC\n+\nIIIIIIIIIIIIIIIIIIIIIIIIII\n") // second barcode
+	sb.WriteString("@read4\nZZZZZZZZZZZZZZZZACGTACGTAC\n+\nIIIIIIIIIIIIIIIIIIIIIIIIII\n") // unrecognized -> dropped
+	if err := os.WriteFile(r1, []byte(sb.String()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var err error
+	out := captureStdout(t, func() {
+		err = ExtractFQ([]string{r1}, false, wl)
+	})
+	if err != nil {
+		t.Fatalf("ExtractFQ (10X): %v", err)
+	}
+	lines := splitNonEmpty(string(out))
+	if len(lines) != 2 {
+		t.Fatalf("got %d barcodes, want 2 (deduped, unrecognized dropped): %v", len(lines), lines)
+	}
+}
+
+// ExtractFQ only ever reads fqs[0] for 10X input (the barcode lives solely
+// in R1); passing a second file must not error, and its contents must be
+// ignored rather than misread as a second R1.
+func TestExtract10XFQ_IgnoresR2(t *testing.T) {
+	dir := t.TempDir()
+	r1 := filepath.Join(dir, "r1.fq")
+	r2 := filepath.Join(dir, "r2.fq")
+	wl := filepath.Join(dir, "whitelist.txt")
+	if err := os.WriteFile(wl, []byte("AAAACCCCGGGGTTTT\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	writeTenXFastqExtract(t, r1, []string{"read1"}, "AAAACCCCGGGGTTTT")
+	if err := os.WriteFile(r2, []byte("@read1\nGGGGCCCCAAAATTTT\n+\nIIIIIIIIIIIIIIII\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var err error
+	out := captureStdout(t, func() {
+		err = ExtractFQ([]string{r1, r2}, false, wl)
+	})
+	if err != nil {
+		t.Fatalf("ExtractFQ (10X, paired): %v", err)
+	}
+	lines := splitNonEmpty(string(out))
+	if len(lines) != 1 || lines[0] != "AAAACCCCGGGGTTTT" {
+		t.Errorf("got %v, want exactly [AAAACCCCGGGGTTTT]", lines)
 	}
 }

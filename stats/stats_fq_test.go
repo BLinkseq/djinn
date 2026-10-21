@@ -24,7 +24,7 @@ func writeFastq(t *testing.T, records ...string) string {
 
 func statsFQOf(t *testing.T, path, platform string) string {
 	t.Helper()
-	out, err := captureStdout(t, func() error { return StatsFQ(path, platform) })
+	out, err := captureStdout(t, func() error { return StatsFQ(path, platform, "") })
 	if err != nil {
 		t.Fatalf("StatsFQ: %v", err)
 	}
@@ -156,7 +156,7 @@ func TestStatsFQ_StlfrAndTellseqByName(t *testing.T) {
 func TestStatsFQ_Errors(t *testing.T) {
 	noBarcodes := writeFastq(t, fq("r1 1:N:0:ATGGAGA"), fq("r2 1:N:0:ATGGAGA"))
 
-	if _, err := captureStdout(t, func() error { return StatsFQ(noBarcodes, "") }); err == nil ||
+	if _, err := captureStdout(t, func() error { return StatsFQ(noBarcodes, "", "") }); err == nil ||
 		!strings.Contains(err.Error(), "unable to determine") {
 		t.Errorf("no detectable technology: err = %v", err)
 	}
@@ -166,11 +166,45 @@ func TestStatsFQ_Errors(t *testing.T) {
 		t.Errorf("no barcodes with a named platform: got:\n%s\nwant:\n%s", got, want)
 	}
 
-	if _, err := captureStdout(t, func() error { return StatsFQ(noBarcodes, "10x") }); err == nil ||
+	if _, err := captureStdout(t, func() error { return StatsFQ(noBarcodes, "10x", "") }); err == nil ||
 		!strings.Contains(err.Error(), "unknown platform") {
 		t.Errorf("unknown platform: err = %v", err)
 	}
-	if err := StatsFQ(fmt.Sprintf("%s/missing.fq", t.TempDir()), Haplotagging); err == nil {
+	if err := StatsFQ(fmt.Sprintf("%s/missing.fq", t.TempDir()), Haplotagging, ""); err == nil {
 		t.Error("a missing file should be an error")
+	}
+}
+
+func tenxRecord(id, barcode string) string {
+	seq := barcode + "ACGTACGTAC"
+	return "@" + id + "\n" + seq + "\n+\n" + strings.Repeat("I", len(seq)) + "\n"
+}
+
+// Regression test: StatsFQ's 10X branch built parse/sch from bcMap but then
+// unconditionally called chooseParser(fq, platform) right after, which
+// reassigned parse/sch every time regardless of bcMap -- --bc-list was a
+// complete no-op and 10X input always fell through to plain
+// haplotagging/stlfr/tellseq auto-detection (which would just fail, since
+// 10X has no self-describing marker).
+func TestStatsFQ_TenX(t *testing.T) {
+	dir := t.TempDir()
+	wl := fmt.Sprintf("%s/whitelist.txt", dir)
+	if err := os.WriteFile(wl, []byte("AAAACCCCGGGGTTTT\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	path := writeFastq(t,
+		tenxRecord("read1", "AAAACCCCGGGGTTTT"),
+		tenxRecord("read2", "AAAACCCCGGGGTTTT"),
+		tenxRecord("read3", "ZZZZZZZZZZZZZZZZ"), // not in whitelist -> no barcode at all
+	)
+
+	got, err := captureStdout(t, func() error { return StatsFQ(path, "", wl) })
+	if err != nil {
+		t.Fatalf("StatsFQ (10X): %v", err)
+	}
+	lines := strings.Split(strings.TrimRight(got, "\n"), "\n")
+	if lines[0] != "Reads\t3" || lines[1] != "Barcodes\t2" || lines[2] != "Barcodes_Valid\t2" || lines[3] != "Barcodes_Invalid\t0" {
+		t.Errorf("unexpected 10X stats output:\n%s", got)
 	}
 }
