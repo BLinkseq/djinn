@@ -9,12 +9,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/blinkseq/djinn/barcodes"
-	"github.com/blinkseq/djinn/fastq"
 	"io"
 	"os"
 	"slices"
 	"sync"
+
+	"github.com/blinkseq/djinn/fastq"
 
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
@@ -154,7 +154,7 @@ func SortFqByBX(fqs []string, outPrefix, tmpDir string, threads int, standardize
 		if bcMap == "" {
 			return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s. If this is 10X data, a barcode whitelist file must be provided to identify inline barcodes.", fqs[0])
 		}
-		bclist, err := barcodes.LoadTenXFromFile(bcMap)
+		bclist, err := fastq.Load10X(bcMap)
 		if err != nil {
 			return err
 		}

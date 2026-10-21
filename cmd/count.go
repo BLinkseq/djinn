@@ -32,25 +32,19 @@ var countXamCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		invalid, _ := cmd.Flags().GetBool("invalid")
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
-		invalid, err := cmd.Flags().GetBool("invalid")
-		if err != nil {
-			return err
-		}
 		return count.CountXam(args[0], invalid, threads)
 	},
 }
 
-// TODO: Docstring is all wrong
 var countFqCmd = &cobra.Command{
-	Use:     "count [options] file.R1.fq.gz [file.R2.fq.gz]",
-	Short:   "Count barcode occurance",
-	Example: "count -t 4 curratum.R1.fq.gz curratum.R2.fq.gz > curratum.bc",
-	Long: "Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped). " +
-		"Inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
-		"(@seq_id:barcode) formats. Writes to stdout.",
+	Use:                   "count [options] file.R1.fq.gz [file.R2.fq.gz]",
+	Short:                 "Count unique barcode occurance",
+	Example:               "count curratum.R1.fq.gz curratum.R2.fq.gz > curratum.bc",
+	Long:                  "Accepts one FASTQ file or file pair (R1 and R2, can be gzipped). Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -72,11 +66,12 @@ var countFqCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		invalid, err := cmd.Flags().GetBool("invalid")
-		if err != nil {
-			return err
-		}
-		return count.CountFQ(args, invalid)
+		invalid, _ := cmd.Flags().GetBool("invalid")
+		mapfile, _ := cmd.Flags().GetString("bc-list")
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
+
+		return count.CountFQ(args, invalid, mapfile)
 	},
 }
 
@@ -88,5 +83,7 @@ func init() {
 	countXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 	countXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
+	convertFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
 	countFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
+	countFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

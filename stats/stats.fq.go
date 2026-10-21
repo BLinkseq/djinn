@@ -21,6 +21,7 @@ const (
 	Haplotagging = "haplotagging"
 	Stlfr        = "stlfr"
 	Tellseq      = "tellseq"
+	TenX         = "10x"
 )
 
 // StatsFQ prints a summary of the barcodes in one FASTQ file to stdout:
@@ -37,7 +38,20 @@ const (
 //
 // platform is "haplotagging", "stlfr" or "tellseq" (any capitalization); "" works it out from the
 // first 100 reads, the way the other djinn FASTQ commands do.
-func StatsFQ(fq, platform string) error {
+func StatsFQ(fq, platform string, bcMap string) error {
+	var parse func(rec *fastx.Record) (fastq.CoreFq, bool)
+	var sch scheme
+
+	if bcMap != "" {
+		var bclist map[string]struct{}
+		bclist, err := fastq.Load10X(bcMap)
+		if err != nil {
+			return err
+		}
+		parse = func(rec *fastx.Record) (fastq.CoreFq, bool) { return fastq.TenXR12Corefq(rec, bclist) }
+		sch = tenxScheme
+	}
+
 	parse, sch, err := chooseParser(fq, platform)
 	if err != nil {
 		return err
@@ -191,6 +205,24 @@ var stlfrScheme = scheme{
 // the position (1 to 18) where it sits. Longer barcodes are not an error: the table simply gets longer.
 var tellseqScheme = scheme{
 	slots: 18,
+	label: func(i int) string { return strconv.Itoa(i + 1) },
+	mark: func(bc []byte, bad []int) []int {
+		for len(bad) < len(bc) {
+			bad = append(bad, 0)
+		}
+		for i, b := range bc {
+			if b == 'N' || b == 'n' {
+				bad[i]++
+			}
+		}
+		return bad
+	},
+}
+
+// 10X barcodes are 16 bases. An N is a base that could not be called, and we count it against
+// the position (1 to 16) where it sits. Longer barcodes are not an error: the table simply gets longer.
+var tenxScheme = scheme{
+	slots: 16,
 	label: func(i int) string { return strconv.Itoa(i + 1) },
 	mark: func(bc []byte, bad []int) []int {
 		for len(bad) < len(bc) {

@@ -3,6 +3,7 @@ package fastq
 import (
 	"bytes"
 
+	"github.com/blinkseq/djinn/barcodes"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 
@@ -55,5 +56,16 @@ func TenXR22Corefq(rec *fastx.Record) (core CoreFq) {
 		Barcode:  nil,
 		Valid:    false,
 		Comments: desc,
+	}
+}
+
+// Load a 10X barcode whitelist. If bcmap is '10x' or '10X', loads the official list
+// embedded in djinn, otherwise rease the bcmap file
+func Load10X(bcmap string) (barcodeMap map[string]struct{}, err error) {
+	switch bcmap {
+	case "10X", "10x":
+		return barcodes.LoadTenXSet()
+	default:
+		return barcodes.LoadTenXFromFile(bcmap)
 	}
 }

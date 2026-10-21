@@ -111,13 +111,29 @@ var unlinkedFqCmd = &cobra.Command{
 				return err
 			}
 		}
+
+		mapfile, err := cmd.Flags().GetString("bc-list")
+		if err != nil {
+			return err
+		}
+		switch mapfile {
+		case "", "10x", "10X": // skip check
+		default:
+			if filecheck(mapfile) != nil {
+				return err
+			}
+		}
+
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		singles, _ := cmd.Flags().GetBool("unlinked")
-		bcCount, _ := cmd.Flags().GetString("bc-count")
+		bcCount, _ := cmd.Flags().GetBool("bc-count")
+		mapfile, _ := cmd.Flags().GetString("bc-list")
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
 
-		return unlinked.RemoveUnlinkedFQ(args[1:], args[0], singles, bcCount)
+		return unlinked.RemoveUnlinkedFQ(args[1:], args[0], singles, bcCount, mapfile)
 	},
 }
 
@@ -133,6 +149,7 @@ func init() {
 
 	//TODO SINGLETONS SHOULD BE A FLAG, OUTPUT SHOULD BE PREFIX.SINGLE....
 	unlinkedFqCmd.Flags().BoolP("unlinked", "u", false, "Write valid singleton records to prefix.unlinked (optional)")
-	unlinkedFqCmd.Flags().StringP("bc-count", "b", "", "Write valid barcode counts to this file (optional)")
-
+	unlinkedFqCmd.Flags().BoolP("bc-count", "b", false, "Write valid barcode counts to prefix.counts (optional)")
+	unlinkedFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	unlinkedFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

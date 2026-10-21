@@ -64,14 +64,10 @@ var convertXamCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		mapfile, _ := cmd.Flags().GetString("map")
+		sam, _ := cmd.Flags().GetBool("sam")
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
-
-		mapfile, _ := cmd.Flags().GetString("map")
-		sam, err := cmd.Flags().GetBool("sam")
-		if err != nil {
-			return err
-		}
 
 		switch strings.ToLower(args[0]) {
 		case "standard":
@@ -86,7 +82,7 @@ var convertFqCmd = &cobra.Command{
 	Use:     "convert [options] outFormat prefix file.R1.fq.gz [file.R2.fq.gz]",
 	Short:   "Convert between linked-read FASTQ/barcode formats",
 	Example: "convert 10x gcurratum_as10X gcurratum.R1.fq.gz gcurratum.R2.fq.gz",
-	Long: `Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped). Writes prefix.R1.fq.gz (and prefix.R2.fq.gz if paired). The first positional argument outFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x). Specifying 10X output will draw barcodes from the official 10X Genomics barcode whitelist.
+	Long: `Accepts one FASTQ file or file pair (R1 and R2, can be gzipped). Writes prefix.R1.fq.gz (and prefix.R2.fq.gz if paired). The first positional argument outFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x). Specifying 10X output will draw barcodes from the official 10X Genomics barcode whitelist.
 
 | outFormat    | barcode format | example            |
 ------------------------------------------------------
@@ -120,17 +116,23 @@ var convertFqCmd = &cobra.Command{
 		default:
 			return fmt.Errorf("toFormat must be one of: standard, haplotagging, stlfr, tellseq, 10x")
 		}
-		mapfile, err := cmd.Flags().GetString("bc-map")
+		mapfile, err := cmd.Flags().GetString("bc-list")
 		if err != nil {
 			return err
 		}
-		if mapfile != "" && filecheck(mapfile) != nil {
-			return err
+		switch mapfile {
+		case "", "10x", "10X": // skip check
+		default:
+			if filecheck(mapfile) != nil {
+				return err
+			}
 		}
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		mapfile, _ := cmd.Flags().GetString("bc-map")
+		mapfile, _ := cmd.Flags().GetString("bc-list")
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
 
 		switch strings.ToLower(args[0]) {
 		case "standard":
@@ -155,7 +157,6 @@ func init() {
 	convertXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	convertXamCmd.Flags().StringP("map", "m", "", "Write barcode conversion map to this file (required if not 'standard')")
 
-	convertFqCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")
+	convertFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	convertFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }
-
-//TODO SET THREADS FOR FASTQ

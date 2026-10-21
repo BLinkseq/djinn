@@ -91,14 +91,26 @@ var invalidFqCmd = &cobra.Command{
 				return err
 			}
 		}
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		inv, err := cmd.Flags().GetBool("invalid")
+		mapfile, err := cmd.Flags().GetString("bc-list")
 		if err != nil {
 			return err
 		}
-		return invalid.FilterInvalidFQ(args[1:], args[0], inv)
+		switch mapfile {
+		case "", "10x", "10X": // skip check
+		default:
+			if filecheck(mapfile) != nil {
+				return err
+			}
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		inv, _ := cmd.Flags().GetBool("invalid")
+		mapfile, _ := cmd.Flags().GetString("bc-list")
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
+
+		return invalid.FilterInvalidFQ(args[1:], args[0], inv, mapfile)
 	},
 }
 
@@ -111,6 +123,8 @@ func init() {
 	invalidXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	invalidXamCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to files with this prefix")
 
-	//TODO INVALID SHOULD BE A FLAG, OUTPUT SHOULD BE PREFIX.INVALID....
+	invalidFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
 	invalidFqCmd.Flags().BoolP("invalid", "i", false, "Write records with invalid barcodes to prefix.invalid")
+	invalidFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
+
 }

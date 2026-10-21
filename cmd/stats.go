@@ -94,11 +94,12 @@ var statsFqCmd = &cobra.Command{
 		return fmt.Errorf("unknown platform %q, expected haplotagging, stlfr or tellseq", platform)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		platform, err := cmd.Flags().GetString("platform")
-		if err != nil {
-			return err
-		}
-		return stats.StatsFQ(args[0], platform)
+		platform, _ := cmd.Flags().GetString("platform")
+		mapfile, _ := cmd.Flags().GetString("bc-list")
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
+
+		return stats.StatsFQ(args[0], strings.ToLower(platform), mapfile)
 	},
 }
 
@@ -111,4 +112,6 @@ func init() {
 	statsXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
 	statsFqCmd.Flags().StringP("platform", "p", "", "Linked-read technology: haplotagging, stlfr or tellseq (default: detect from the first 100 reads)")
+	unlinkedFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	unlinkedFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

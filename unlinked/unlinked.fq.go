@@ -86,14 +86,14 @@ func getFqCount(infiles []string) (map[string]int, error) {
 	return set, nil
 }
 
-func RemoveUnlinkedFQ(fqs []string, prefix string, keepSingle bool, barcodecount string) error {
+func RemoveUnlinkedFQ(fqs []string, prefix string, keepSingle, barcodecount bool, bcmap string) error {
 	// guard against draining stdin when getting barcode counts
 	bcCounts, err := getFqCount(fqs)
 	if err != nil {
 		return err
 	}
-	if barcodecount != "" {
-		f, err := os.Create(barcodecount)
+	if barcodecount {
+		f, err := os.Create(prefix + ".count")
 		if err != nil {
 			return err
 		}
@@ -101,7 +101,7 @@ func RemoveUnlinkedFQ(fqs []string, prefix string, keepSingle bool, barcodecount
 		for key, val := range bcCounts {
 			writer.WriteString(key)
 			writer.WriteByte('\t')
-			writer.WriteString(strconv.Itoa(int(val)))
+			writer.WriteString(strconv.Itoa(val))
 			writer.WriteByte('\n')
 		}
 		writer.Flush()
@@ -109,7 +109,7 @@ func RemoveUnlinkedFQ(fqs []string, prefix string, keepSingle bool, barcodecount
 	}
 
 	// determine what kind of linked-read tech it is, once, from the first file
-	coreParser, _, err := fastq.CoreFqParser(fqs[0])
+	coreParser, bcFmt, err := fastq.CoreFqParser(fqs[0])
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -117,7 +117,20 @@ func RemoveUnlinkedFQ(fqs []string, prefix string, keepSingle bool, barcodecount
 		return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s", fqs[0])
 	}
 
-	for idx, i := range fqs { // iterate over files
+	// --- determine output format from input ------------
+	var writer func(*fastq.CoreFq, *bufio.Writer)
+
+	switch bcFmt {
+	case "haplotagging":
+		writer = (*fastq.CoreFq).ToHaplotagging
+	case "stlfr":
+		writer = (*fastq.CoreFq).ToStlfr
+	case "tellseq":
+		writer = (*fastq.CoreFq).ToTellseq
+	}
+
+	// ----- iterate over files --------------------
+	for idx, i := range fqs {
 		// ---- FQ reader -------------------------
 		fqReader, err := fastx.NewReader(seq.DNA, i, "")
 		if err != nil {
@@ -152,9 +165,9 @@ func RemoveUnlinkedFQ(fqs []string, prefix string, keepSingle bool, barcodecount
 				continue
 			}
 			if bcCounts[string(core.Barcode)] >= 2 {
-				core.ToStandard(outfq.Writer)
+				writer(&core, outfq.Writer)
 			} else if keepSingle {
-				core.ToStandard(outfqSingle.Writer)
+				writer(&core, outfqSingle.Writer)
 			}
 		}
 		fqReader.Close()

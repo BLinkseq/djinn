@@ -3,12 +3,13 @@ package convert
 import (
 	"bufio"
 	"fmt"
-	"github.com/blinkseq/djinn/barcodes"
-	"github.com/blinkseq/djinn/fastq"
 	"io"
 	"os"
 	"slices"
 	"strconv"
+
+	"github.com/blinkseq/djinn/barcodes"
+	"github.com/blinkseq/djinn/fastq"
 
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
@@ -21,18 +22,15 @@ func ConvertFq(fqs []string, convTo, prefix, bcmap string) error {
 	var bcs barcodes.Generator
 	var converter func(*fastq.CoreFq, *bufio.Writer)
 	var fmtType string
+	var coreParser func(rec *fastx.Record) (core fastq.CoreFq, ok bool)
 
 	// --- assess the data type and get the parser -----------------------------
-	coreParser, fmtType, err := fastq.CoreFqParser(fqs[0])
-	if err != nil {
-		return fmt.Errorf("%w", err)
-	}
-	if coreParser == nil {
-		if bcmap == "" {
-			return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s. If this is 10X data, a barcode file must be provided to identify inline barcodes.", fqs[0])
-		} else {
-			// SWAP TO THE 10X CONVERTER and return
-			return ConvertFrom10X(fqs, convTo, prefix, bcmap)
+	if bcmap != "" {
+		return ConvertFrom10X(fqs, convTo, prefix, bcmap)
+	} else {
+		coreParser, fmtType, err = fastq.CoreFqParser(fqs[0])
+		if err != nil {
+			return fmt.Errorf("%w", err)
 		}
 	}
 
@@ -167,7 +165,8 @@ func ConvertFrom10X(fqs []string, convTo, prefix, bcmap string) error {
 
 	seen := make(map[string][]byte, 4_000_000)
 	bcBuf := make([]byte, bcs.MaxLen()) // generated-barcode buffer
-	bclist, err := barcodes.LoadTenXFromFile(bcmap)
+
+	bclist, err := fastq.Load10X(bcmap)
 	if err != nil {
 		return err
 	}

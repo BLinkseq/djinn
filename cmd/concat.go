@@ -63,5 +63,5 @@ func init() {
 	//sortFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	//sortFqCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
 	//sortFqCmd.Flags().Bool("standardize", false, "Output using standardized BX:Z:/VX:i: tags instead of the detected input format")
-	//sortFqCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")
+	//sortFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list (10X Genomics input format only)")
 }

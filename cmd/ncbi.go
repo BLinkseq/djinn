@@ -65,7 +65,7 @@ var ncbiFq2XamCmd = &cobra.Command{
 				return err
 			}
 		}
-		mapfile, err := cmd.Flags().GetString("bc-map")
+		mapfile, err := cmd.Flags().GetString("bc-list")
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ var ncbiFq2XamCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
-		mapfile, _ := cmd.Flags().GetString("bc-map")
+		mapfile, _ := cmd.Flags().GetString("bc-list")
 
 		return ncbi.NcbiFq(args, mapfile, threads)
 	},
@@ -92,5 +92,5 @@ func init() {
 	ncbiXam2FqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
 	ncbiFq2XamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
-	ncbiFq2XamCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")
+	ncbiFq2XamCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list (10X Genomics input format only)")
 }
