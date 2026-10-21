@@ -8,6 +8,7 @@ import codeblocks from 'starlight-codeblocks';
 
 export default defineConfig({
   site: 'https://blinkseq.github.io/djinn',
+  base: '/djinn',
   markdown: {
     shikiConfig: {
       themes: {
