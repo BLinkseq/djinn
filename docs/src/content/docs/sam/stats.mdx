@@ -44,7 +44,7 @@ djinn sam stats -d 50000 -@ 4 curratum.bam > curratum.molecules.tsv
 |:-------------------|:------------------------------------------------------------------------|
 | `contig`           | chromosome/contig the molecule is on                                  |
 | `molecule`         | the barcode, suffixed with `-N` if split by `--distance-threshold`    |
-| `reads`            | number of reads sharing the barcode on this molecule                  |
+| `reads`            | number of read pairs (or unpaired reads) sharing the barcode on this molecule                  |
 | `start`            | leftmost aligned position                                              |
 | `end`              | rightmost aligned position                                             |
 | `length_inferred`  | `end - start`                                                          |

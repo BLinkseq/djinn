@@ -30,7 +30,7 @@ import (
 )
 
 // The column names of the output table (the first line of the output).
-const header = "contig\tmolecule\treads\tstart\tend\tlength_inferred\taligned_bp\tinsert_len\tcoverage_bp\tcoverage_inserts\n"
+const header = "contig\tmolecule\tfragments\tstart\tend\tlength_inferred\taligned_bp\tinsert_len\tcoverage_bp\tcoverage_inserts\n"
 
 // ErrNotSorted is returned when the input is not coordinate sorted.
 // "Coordinate sorted" means the reads are listed in order of where they sit on each
