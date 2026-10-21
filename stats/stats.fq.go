@@ -43,18 +43,18 @@ func StatsFQ(fq, platform string, bcMap string) error {
 	var sch scheme
 
 	if bcMap != "" {
-		var bclist map[string]struct{}
 		bclist, err := fastq.Load10X(bcMap)
 		if err != nil {
 			return err
 		}
 		parse = func(rec *fastx.Record) (fastq.CoreFq, bool) { return fastq.TenXR12Corefq(rec, bclist) }
 		sch = tenxScheme
-	}
-
-	parse, sch, err := chooseParser(fq, platform)
-	if err != nil {
-		return err
+	} else {
+		var err error
+		parse, sch, err = chooseParser(fq, platform)
+		if err != nil {
+			return err
+		}
 	}
 
 	seq.ValidateSeq = false // reads can hold N and other ambiguity codes; nothing here needs them checked
