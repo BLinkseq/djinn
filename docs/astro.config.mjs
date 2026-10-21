@@ -9,14 +9,6 @@ import codeblocks from 'starlight-codeblocks';
 export default defineConfig({
   site: 'https://blinkseq.github.io/djinn',
   base: '/djinn',
-  markdown: {
-    shikiConfig: {
-      themes: {
-        light: 'horizon-bright',
-        dark: 'horizon',
-      },
-    },
-  },
 	integrations: [
     starlight({
       customCss: ['./src/style/global.css'],
