@@ -13,7 +13,7 @@ the `BX:Z` SAM tag. If your barcodes aren't in the `BX:Z` SAM tag, use [convert]
 [standardize](../standardize) to convert it into a compliant format.
 
 ```bash usage
-djinn sam sort INPUT
+sort file.bam > out.bam
 ```
 
 Example: sort fastq with `pb` temporary directory
@@ -24,6 +24,6 @@ djinn sam sort -t pb pebbles.bam > pebbles.sort.bam
 ## Options
 | argument            | description                                          |
 | :------------------ | :--------------------------------------------------- |
-| `INPUT`             | SAM/BAM file <Badge text="required" variant="tip" /> |
+| `file.bam`          | SAM/BAM file <Badge text="required" variant="tip" /> |
 | `-@` `--threads`    | Threads to use (default: 2)                |
 | `-t` `--tmp-prefix` | Folder for temporary files                           |

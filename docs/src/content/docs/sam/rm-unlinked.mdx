@@ -15,7 +15,7 @@ per read-pair or unpair read.
 ## Usage
 
 ```bash
-djinn sam rm-unlinked [--singletons] INPUT > output.bam
+rm-unlinked [--singletons] file.bam > output.bam
 ```
 
 Example: remove unlinked barcodes and retain them in a separate file
@@ -26,7 +26,7 @@ djinn sam rm-unlinked --singletons hyena.singles.bam hyena.bam > hyena.filter.ba
 ## Options
 | argument            | description                                                                        |
 | :------------------ | :--------------------------------------------------------------------------------- |
-| `INPUTS`            | SAM/BAM file <Badge text="required" variant="tip" />                               |
+| `file.bam`          | SAM/BAM file <Badge text="required" variant="tip" />                               |
 | `-b` `--bc-count`   | Write valid barcode counts to this file <Badge text="optional" variant="tip" />    |
 | `-S` `--sam`        | Output sam instead of BAM                                                          |
 | `-s` `--singletons` | Write valid singleton records to this file <Badge text="optional" variant="tip" /> |

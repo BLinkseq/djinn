@@ -10,7 +10,7 @@ To get a list of all the unique barcodes in your data, use `extract`. Writes to 
 
 ## Usage
 ```bash
-djinn sam extract INPUT
+extract file.bam > out.bc
 ```
 
 Example
@@ -21,6 +21,6 @@ djinn sam extract sample1.bam > sample1.bc
 ## Options
 | argument          | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
-| `INPUT`           | SAM/BAM file <Badge text="required" variant="tip" />                          |
+| `file.bam`           | SAM/BAM file <Badge text="required" variant="tip" />                          |
 | `-i` `--invalid`  | Include invalid barcodes                                                      |
 | `-@` `--threads`  | Threads to use (default: 2)                                         |

@@ -14,17 +14,17 @@ The first positional argument `TARGET` specifies the output data format: `standa
 `haplotagging`, `tellseq`, `stlfr`, or `10x`.
 
 ```bash
-convert [options] TARGET file.bam
+convert [options] TARGET file.bam > out.bam
 ```
 
 Example: convert stFLR barcode style to 10X style
 ```bash
-convert -@ 3 -m gcur.stlfr210x 10x gcurratum.bam > gcurratum.10x.bam
+djinn sam convert -@ 3 -m gcur.stlfr210x 10x gcurratum.bam > gcurratum.10x.bam
 ```
 
 Example: standardize TELL-seq barcocdes
 ```bash
-convert -@ 4 standard gcurratum.tellseq.bam > gcurratum.std.bam
+djinn sam convert -@ 4 standard gcurratum.tellseq.bam > gcurratum.std.bam
 ```
 
 ## Options

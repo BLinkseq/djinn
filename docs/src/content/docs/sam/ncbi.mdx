@@ -16,15 +16,21 @@ The reverse of this process is to convert to FASTQ from SAM/BAM.
 
 ## Usage
 ```bash
-djinn sam ncbi PREFIX infile.bam
+djinn sam ncbi PREFIX file.bam
 
 # is equivalent to #
 samtools fastq -N -c 6 -T "*" -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz infile.bam
 ```
 
+Example
+```bash
+djinn sam ncbi cornsnake fMt_colub.bam
+```
+
+
 ## Options
 | argument         | description                                                    |
 | :--------------- | :------------------------------------------------------------- |
-| `INPUT`          | SAM/BAM file <Badge text="required" variant="tip" />           |
+| `file.bam`          | SAM/BAM file <Badge text="required" variant="tip" />           |
 | `PREFIX`         | output filename prefix <Badge text="required" variant="tip" /> |
 | `-@` `--threads` | Threads to use (default: 2)                          |
