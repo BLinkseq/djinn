@@ -20,12 +20,12 @@ or the literal value `10x` to use the official 10X Genomics whitelist embedded i
 ## Usage
 
 ```bash
-djinn fastq rm-unlinked [--unlinked] PREFIX file.R1.fq.gz [file.R2.fq.gz]
+rm-unlinked [--unlinked] PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
 Example: remove unlinked barcodes and retain them in a separate file
 ```bash 
-djinn fastq rm-unlinked --unlinked hyena.clean hyena.R*.fq.gz
+djinn fq rm-unlinked --unlinked hyena.clean hyena.R*.fq.gz
 ```
 
 ## Options

@@ -32,13 +32,14 @@ official 10X Genomics whitelist embedded in Djinn.
 
 ## Usage
 ```bash
-djinn fastq ncbi file.R1.fq.gz [file.R2.fq.gz] > output.bam
+ncbi file.R1.fq.gz [file.R2.fq.gz] > output.bam
 ```
 
 Example
 ```bash
-djinn fastq ncbi file.R1.fq file.R2.fq > out.bam
+djinn fq ncbi file.R1.fq file.R2.fq > out.bam
 ```
+
 If you didn't want to use djinn, you can also achieve the same using `samtools`:
 ```bash
 samtools import -O BAM -T "*" -1 file.R1.fq file.R2.fq > out.bam

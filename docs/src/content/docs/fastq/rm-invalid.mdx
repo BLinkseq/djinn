@@ -19,12 +19,12 @@ invalid.
 
 ## Usage
 ```bash
-djinn sam rm-invalid [--invalid] PREFIX file.R1.fq.gz [file.R2.fq.gz]
+rm-invalid [--invalid] PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
 Example: remove invalid barcodes and retain them in a separate file
 ```bash 
-djinn sam rm-invalid --invalid echinda.valid echidna.R*.fq.gz
+djinn fq rm-invalid --invalid echinda.valid echidna.R*.fq.gz
 ```
 
 ## Options

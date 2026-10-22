@@ -23,17 +23,17 @@ is ready for use in [arachne](https://github.com/blinkseq/arachne).
 
 ## Usage
 ```bash
-djinn fastq sort [options] PREFIX file.R1.fq.gz [file.R2.fq.gz]
+sort [options] PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
 Example: sort with specified temporary folder
 ```bash
-djinn fastq sort -t pb peb.sort pebbles.R1.fq.gz pebbles.R2.fq.gz
+djinn fq sort -t pb peb.sort pebbles.R1.fq.gz pebbles.R2.fq.gz
 ```
 
 Example: return barcode counts and convert to standard format
 ```bash
-djinn fastq sort -s peb.sort data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
+djinn fq sort -s peb.sort data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
 ```
 
 ## Options

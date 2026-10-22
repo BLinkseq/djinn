@@ -16,17 +16,17 @@ keep all the reads associated with `-d` number of barcodes or fraction of barcod
 
 ## Usage
 ```bash
-djinn fastq sample -d <value> [-i] PREFIX file.R1.fq.gz [file.R2.fq.gz]
+sample -d <value> [-i] PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
 Example: downsample fastq pair, including invalid barcodes
 ```bash
-djinn fastq sample -d 1000 -i sample1.sub1000 sample1.F.fq.gz sample1.R.fq.gz
+djinn fq sample -d 1000 -i sample1.sub1000 sample1.F.fq.gz sample1.R.fq.gz
 ```
 
 Example: reproducibly downsample barcodes by 50%
 ```bash
-djinn fastq sample -d 0.5 -s 111 sample1.half sample1.F.fq.gz sample1.R.fq.gz
+djinn fq sample -d 0.5 -s 111 sample1.half sample1.F.fq.gz sample1.R.fq.gz
 ```
 
 ## Options
