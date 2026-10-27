@@ -1,5 +1,11 @@
 @import "starlight-ui-tweaks/styles";
 
+@media (min-width: 72rem) {
+  :root {
+    --sl-content-width: calc(100vw - 2 * var(--sl-sidebar-width) - 6rem);
+  }
+}
+
 .card {
   border: none;
   border-radius: 1.25rem; /* rounder corners, tune to taste */
