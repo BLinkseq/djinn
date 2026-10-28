@@ -12,8 +12,8 @@ export default defineConfig({
 	integrations: [
     starlight({
       customCss: ['./src/style/global.css'],
-      title: '3.0',
-      logo: { src: '/src/assets/logo.svg'},
+      title: 'Djinn',
+      logo: { src: '/src/assets/logo.svg', replacesTitle: true,},
       favicon: '/favicon.png',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/BLinkseq/djinn' }],
 			lastUpdated: true,
@@ -24,7 +24,8 @@ export default defineConfig({
       plugins: [
         codeblocks(),
         starlightUiTweaks({
-        navbarLinks: [
+          navbarLinks: [
+           { label : 'Version: 3.0', href: "javascript:void(0);"},
            { label: "BLink-seq", href: "https://blinkseq.github.io"},
         ],
       }),
