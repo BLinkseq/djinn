@@ -13,7 +13,7 @@ export default defineConfig({
     starlight({
       customCss: ['./src/style/global.css'],
       title: 'Djinn',
-      logo: { src: '/src/assets/logo.svg', replacesTitle: true,},
+      logo: { src: '/src/assets/logo.svg', replacesTitle: true },
       favicon: '/favicon.png',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/BLinkseq/djinn' }],
 			lastUpdated: true,
