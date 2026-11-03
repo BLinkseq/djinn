@@ -122,9 +122,9 @@ jobs:
         run: djinn sam concat test/test.bam test/test.bam | samtools view
       - name: sam deconvolve
         if: success() || failure()
-        run: djinn sam deconvolve -d 50000 sorted.bam | samtools view
+        run: djinn sam deconvolve -d 50000 test/test.bam | samtools view
       - name: sam stats
         if: success() || failure()
         run: |
-          djinn sam stats test/s1.sam &&\
+          djinn sam stats test/test.bam &&\
           djinn sam deconvolve -d 50000 sorted.bam 2>/dev/null | samtools sort | djinn sam stats -
