@@ -157,8 +157,8 @@ func init() {
 	sampleXamCmd.Flags().IntP("seed", "s", -1, "Random seed for sampling, must be >= 0")
 	sampleXamCmd.Flags().Float64P("downsample", "d", 0.0, "Number (>=1) or fraction (<1) of barcodes to keep")
 
-	invalidFqCmd.Flags().String("10x", "", "Input is 10X format")
-	invalidFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
+	sampleFqCmd.Flags().String("10x", "", "Input is 10X format")
+	sampleFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 	sampleFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes in subsampling")
 	sampleFqCmd.Flags().IntP("seed", "s", -1, "Random seed for sampling, must be >= 0")
 	sampleFqCmd.Flags().Float64P("downsample", "d", 0.0, "Number (>=1) or fraction (<1) of barcodes to keep")

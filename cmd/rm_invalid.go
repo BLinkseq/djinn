@@ -127,9 +127,9 @@ func init() {
 	invalidXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
 	invalidXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	invalidXamCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to files with this prefix")
+
 	invalidFqCmd.Flags().String("10x", "", "Input is 10X format")
 	invalidFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 	invalidFqCmd.Flags().BoolP("invalid", "i", false, "Write records with invalid barcodes to prefix.invalid")
 	invalidFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
-
 }
