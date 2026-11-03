@@ -92,7 +92,6 @@ var ncbiFq2XamCmd = &cobra.Command{
 	},
 }
 
-// THIS IS PRETTY INCOMPLETE
 func init() {
 	samCmd.AddCommand(ncbiXam2FqCmd)
 	fqCmd.AddCommand(ncbiFq2XamCmd)
