@@ -116,7 +116,7 @@ var convertFqCmd = &cobra.Command{
 		default:
 			return fmt.Errorf("toFormat must be one of: standard, haplotagging, stlfr, tellseq, 10x")
 		}
-		mapfile, err := cmd.Flags().GetString("bc-list")
+		mapfile, err := cmd.Flags().GetString("10x")
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,12 @@ var convertFqCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		mapfile, _ := cmd.Flags().GetString("bc-list")
+		var mapfile string
+		if !cmd.Flags().Changed("10x") {
+			mapfile = "" // flag absent
+		} else {
+			mapfile, _ = cmd.Flags().GetString("10x")
+		}
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
@@ -157,6 +162,7 @@ func init() {
 	convertXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	convertXamCmd.Flags().StringP("map", "m", "", "Write barcode conversion map to this file (required if not 'standard')")
 
-	convertFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	convertFqCmd.Flags().String("10x", "", "Input is 10X format")
+	convertFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 	convertFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

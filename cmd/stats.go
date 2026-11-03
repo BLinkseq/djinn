@@ -88,11 +88,11 @@ var statsFqCmd = &cobra.Command{
 			return err
 		}
 		switch strings.ToLower(platform) {
-		case "", stats.Haplotagging, stats.Stlfr, stats.Tellseq:
+		case "", stats.Haplotagging, stats.Stlfr, stats.Tellseq, stats.TenX:
 		default:
-			return fmt.Errorf("unknown platform %q, expected haplotagging, stlfr or tellseq", platform)
+			return fmt.Errorf("unknown platform %q, expected haplotagging, stlfr, 10x, or tellseq", platform)
 		}
-		mapfile, err := cmd.Flags().GetString("bc-list")
+		mapfile, err := cmd.Flags().GetString("10x")
 		if err != nil {
 			return err
 		}
@@ -107,7 +107,12 @@ var statsFqCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		platform, _ := cmd.Flags().GetString("platform")
-		mapfile, _ := cmd.Flags().GetString("bc-list")
+		var mapfile string
+		if !cmd.Flags().Changed("10x") {
+			mapfile = "" // flag absent
+		} else {
+			mapfile, _ = cmd.Flags().GetString("10x")
+		}
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
@@ -124,6 +129,7 @@ func init() {
 	statsXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
 	statsFqCmd.Flags().StringP("platform", "p", "", "Linked-read technology: haplotagging, stlfr or tellseq (default: detect from the first 100 reads). For 10X data, use --bc-list instead.")
-	statsFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	statsFqCmd.Flags().String("10x", "", "Input is 10X format")
+	statsFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 	statsFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

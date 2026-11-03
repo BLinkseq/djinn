@@ -26,7 +26,7 @@ var samCmd = &cobra.Command{
 var fqCmd = &cobra.Command{
 	Use:   "fq",
 	Short: "FASTQ operations",
-	Long:  "Input can be one FASTQ file or file pair. If input is 10X data, provide a barcode whitelist to --bc-list, or use the embedded official 10X whitelist with '--bc-list 10x'.",
+	Long:  "Input can be one FASTQ file or file pair. If input is 10X data, specify `--10x=whitelist.txt` or use the embedded official 10X barcodes with just `--10x`.",
 }
 
 func init() {

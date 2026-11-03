@@ -77,7 +77,7 @@ var sortFqCmd = &cobra.Command{
 				return err
 			}
 		}
-		bcMap, err := cmd.Flags().GetString("bc-list")
+		bcMap, err := cmd.Flags().GetString("10x")
 		if err != nil {
 			return err
 		}
@@ -91,14 +91,18 @@ var sortFqCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		tmpDir, _ := cmd.Flags().GetString("tmp-prefix")
+		standardize, _ := cmd.Flags().GetBool("standardize")
+		var mapfile string
+		if !cmd.Flags().Changed("10x") {
+			mapfile = "" // flag absent
+		} else {
+			mapfile, _ = cmd.Flags().GetString("10x")
+		}
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
-		tmpDir, _ := cmd.Flags().GetString("tmp-prefix")
-		standardize, _ := cmd.Flags().GetBool("standardize")
-		bcMap, _ := cmd.Flags().GetString("bc-list")
-
-		return sort.SortFqByBX(args[1:], args[0], tmpDir, threads, standardize, bcMap)
+		return sort.SortFqByBX(args[1:], args[0], tmpDir, threads, standardize, mapfile)
 	},
 }
 
@@ -114,5 +118,6 @@ func init() {
 	sortFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	sortFqCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
 	sortFqCmd.Flags().BoolP("standardize", "s", false, "Output using standardized BX:Z:/VX:i: tags instead of the detected input format")
-	sortFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list (10X Genomics input format only)")
+	sortFqCmd.Flags().String("10x", "", "Valid barcode list (10X Genomics input format only)")
+	sortFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 }

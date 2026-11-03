@@ -111,16 +111,38 @@ var sampleFqCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		mapfile, err := cmd.Flags().GetString("10x")
+		if err != nil {
+			return err
+		}
+		switch mapfile {
+		case "", "10x", "10X": // skip check
+		default:
+			if filecheck(mapfile) != nil {
+				return err
+			}
+		}
+
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var mapfile string
+		if !cmd.Flags().Changed("10x") {
+			mapfile = "" // flag absent
+		} else {
+			mapfile, _ = cmd.Flags().GetString("10x")
+		}
 		invalid, _ := cmd.Flags().GetBool("invalid")
 		downsample, _ := cmd.Flags().GetFloat64("downsample")
 		seed, _ := cmd.Flags().GetInt("seed")
 		if seed < 0 && seed != -1 {
 			fmt.Println("Notice: a negative seed value does not set a random seed, thus is not reproducible")
 		}
-		return sample.SampleFq(args[1:], args[0], downsample, seed, invalid)
+		if mapfile == "" {
+			return sample.SampleFq(args[1:], args[0], downsample, seed, invalid)
+		} else {
+			return sample.SampleFq10x(args[1:], args[0], mapfile, downsample, seed)
+		}
 	},
 }
 
@@ -135,8 +157,9 @@ func init() {
 	sampleXamCmd.Flags().IntP("seed", "s", -1, "Random seed for sampling, must be >= 0")
 	sampleXamCmd.Flags().Float64P("downsample", "d", 0.0, "Number (>=1) or fraction (<1) of barcodes to keep")
 
+	invalidFqCmd.Flags().String("10x", "", "Input is 10X format")
+	invalidFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 	sampleFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes in subsampling")
 	sampleFqCmd.Flags().IntP("seed", "s", -1, "Random seed for sampling, must be >= 0")
 	sampleFqCmd.Flags().Float64P("downsample", "d", 0.0, "Number (>=1) or fraction (<1) of barcodes to keep")
-
 }

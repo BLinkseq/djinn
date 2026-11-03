@@ -65,7 +65,7 @@ var ncbiFq2XamCmd = &cobra.Command{
 				return err
 			}
 		}
-		mapfile, err := cmd.Flags().GetString("bc-list")
+		mapfile, err := cmd.Flags().GetString("10x")
 		if err != nil {
 			return err
 		}
@@ -81,7 +81,12 @@ var ncbiFq2XamCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
-		mapfile, _ := cmd.Flags().GetString("bc-list")
+		var mapfile string
+		if !cmd.Flags().Changed("10x") {
+			mapfile = "" // flag absent
+		} else {
+			mapfile, _ = cmd.Flags().GetString("10x")
+		}
 
 		return ncbi.NcbiFq(args, mapfile, threads)
 	},

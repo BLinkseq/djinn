@@ -101,7 +101,7 @@ var unlinkedFqCmd = &cobra.Command{
 				return err
 			}
 		}
-		mapfile, err := cmd.Flags().GetString("bc-list")
+		mapfile, err := cmd.Flags().GetString("10x")
 		if err != nil {
 			return err
 		}
@@ -118,7 +118,12 @@ var unlinkedFqCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		singles, _ := cmd.Flags().GetBool("unlinked")
 		bcCount, _ := cmd.Flags().GetBool("bc-count")
-		mapfile, _ := cmd.Flags().GetString("bc-list")
+		var mapfile string
+		if !cmd.Flags().Changed("10x") {
+			mapfile = "" // flag absent
+		} else {
+			mapfile, _ = cmd.Flags().GetString("10x")
+		}
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
@@ -139,6 +144,7 @@ func init() {
 	//TODO SINGLETONS SHOULD BE A FLAG, OUTPUT SHOULD BE PREFIX.SINGLE....
 	unlinkedFqCmd.Flags().BoolP("unlinked", "u", false, "Write valid singleton records to prefix.unlinked (optional)")
 	unlinkedFqCmd.Flags().Bool("bc-count", false, "Write valid barcode counts to prefix.counts (optional)")
-	unlinkedFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	unlinkedFqCmd.Flags().String("10x", "", "Input is 10X format")
+	unlinkedFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 	unlinkedFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

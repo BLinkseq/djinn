@@ -91,7 +91,7 @@ var invalidFqCmd = &cobra.Command{
 				return err
 			}
 		}
-		mapfile, err := cmd.Flags().GetString("bc-list")
+		mapfile, err := cmd.Flags().GetString("10x")
 		if err != nil {
 			return err
 		}
@@ -105,8 +105,13 @@ var invalidFqCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var mapfile string
+		if !cmd.Flags().Changed("10x") {
+			mapfile = "" // flag absent
+		} else {
+			mapfile, _ = cmd.Flags().GetString("10x")
+		}
 		inv, _ := cmd.Flags().GetBool("invalid")
-		mapfile, _ := cmd.Flags().GetString("bc-list")
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
@@ -122,8 +127,8 @@ func init() {
 	invalidXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
 	invalidXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 	invalidXamCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to files with this prefix")
-
-	invalidFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	invalidFqCmd.Flags().String("10x", "", "Input is 10X format")
+	invalidFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 	invalidFqCmd.Flags().BoolP("invalid", "i", false, "Write records with invalid barcodes to prefix.invalid")
 	invalidFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 

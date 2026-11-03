@@ -65,7 +65,7 @@ var extractFqCmd = &cobra.Command{
 				return err
 			}
 		}
-		mapfile, err := cmd.Flags().GetString("bc-list")
+		mapfile, err := cmd.Flags().GetString("10x")
 		if err != nil {
 			return err
 		}
@@ -79,8 +79,13 @@ var extractFqCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var mapfile string
+		if !cmd.Flags().Changed("10x") {
+			mapfile = "" // flag absent
+		} else {
+			mapfile, _ = cmd.Flags().GetString("10x")
+		}
 		invalid, _ := cmd.Flags().GetBool("invalid")
-		mapfile, _ := cmd.Flags().GetString("bc-list")
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
@@ -96,7 +101,8 @@ func init() {
 	extractXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 	extractXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
-	extractFqCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list [if 10X input]")
+	extractFqCmd.Flags().String("10x", "", "Input is 10X format")
+	extractFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 	extractFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 	extractFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }

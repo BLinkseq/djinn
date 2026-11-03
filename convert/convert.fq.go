@@ -62,6 +62,7 @@ func ConvertFq(fqs []string, convTo, prefix, bcmap string) error {
 	defer bcs.Close()
 
 	seen := make(map[string][]byte, 4_000_000)
+	defer writeBarcodeMap(prefix, seen)
 	bcBuf := make([]byte, bcs.MaxLen()) // generated-barcode buffer
 
 	// ── open reader ───────────────────────────────────────────────────────────
@@ -116,24 +117,6 @@ func ConvertFq(fqs []string, convTo, prefix, bcmap string) error {
 		fqReader.Close()
 		outfq.Close()
 	}
-
-	// ------ write barcodes to map ------------------------
-	f, err := os.Create(prefix + ".bc.map")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	writer := bufio.NewWriter(f)
-	defer writer.Flush()
-
-	for key, val := range seen {
-		writer.WriteString(key)
-		writer.WriteByte('\t')
-		writer.Write(val)
-		writer.WriteByte('\n')
-	}
-
 	return nil
 }
 
@@ -164,6 +147,7 @@ func ConvertFrom10X(fqs []string, convTo, prefix, bcmap string) error {
 	defer bcs.Close()
 
 	seen := make(map[string][]byte, 4_000_000)
+	defer writeBarcodeMap(prefix, seen)
 	bcBuf := make([]byte, bcs.MaxLen()) // generated-barcode buffer
 
 	bclist, err := fastq.Load10X(bcmap)
@@ -222,65 +206,69 @@ func ConvertFrom10X(fqs []string, convTo, prefix, bcmap string) error {
 			}
 			converter(&r1core, R1Writer.Writer)
 		}
-	} else {
-		R2Reader, err := fastx.NewReader(seq.DNA, fqs[1], "")
-		if err != nil {
-			return fmt.Errorf("opening %s: %w", fqs[1], err)
-		}
-		defer R2Reader.Close()
-
-		R2Writer, err := xopen.Wopen(prefix + ".R2.fq.gz")
-		if err != nil {
-			return err
-		}
-		defer R2Writer.Close()
-
-		var r1core, r2core fastq.CoreFq
-
-	Loop:
-		for {
-			// process R1, which doesn't need an R2
-			_r1, r1err := R1Reader.Read()
-			switch r1err {
-			case io.EOF:
-
-			case nil:
-				var ok bool
-				r1core, ok = fastq.TenXR12Corefq(_r1, bclist)
-				if err := resolveBarcode(&r1core, ok); err != nil {
-					return err
-				}
-				converter(&r1core, R1Writer.Writer)
-			default:
-				return r1err
-			}
-
-			// process R2
-			_r2, r2err := R2Reader.Read()
-			switch r2err {
-			case io.EOF:
-				// break when both are exhausted
-				if r1err == io.EOF {
-					break Loop
-				}
-			case nil:
-				r2core = fastq.TenXR22Corefq(_r2)
-				// check if R1 exists and match the seq ID
-				if r1err == nil {
-					if ok := slices.Equal(r1core.ID, r2core.ID); !ok {
-						return fmt.Errorf("Misaligned R1 and R2 records. The 10X format only stores the barcode at the beginning of read 1, meaning Read 2 must have the same sequence ID as Read 1 to reliably assign a barcode to Read 2, but they do not match.\nRead 1:\n%s\nRead 2:\n%s", r1core.ID, r2core.ID)
-					}
-					r2core.Barcode = r1core.Barcode
-					r2core.Valid = r1core.Valid
-				}
-				converter(&r2core, R2Writer.Writer)
-			default:
-				return r2err
-			}
-		}
+		return nil
 	}
 
-	// ------ write barcodes to map ------------------------
+	R2Reader, err := fastx.NewReader(seq.DNA, fqs[1], "")
+	if err != nil {
+		return fmt.Errorf("opening %s: %w", fqs[1], err)
+	}
+	defer R2Reader.Close()
+
+	R2Writer, err := xopen.Wopen(prefix + ".R2.fq.gz")
+	if err != nil {
+		return err
+	}
+	defer R2Writer.Close()
+
+	var r1core, r2core fastq.CoreFq
+
+Loop:
+	for {
+		// process R1, which doesn't need an R2
+		_r1, r1err := R1Reader.Read()
+		switch r1err {
+		case io.EOF:
+
+		case nil:
+			var ok bool
+			r1core, ok = fastq.TenXR12Corefq(_r1, bclist)
+			if err := resolveBarcode(&r1core, ok); err != nil {
+				return err
+			}
+			converter(&r1core, R1Writer.Writer)
+		default:
+			return r1err
+		}
+
+		// process R2
+		_r2, r2err := R2Reader.Read()
+		switch r2err {
+		case io.EOF:
+			// break when both are exhausted
+			if r1err == io.EOF {
+				break Loop
+			}
+		case nil:
+			r2core = fastq.TenXR22Corefq(_r2)
+			// check if R1 exists and match the seq ID
+			if r1err == nil {
+				if ok := slices.Equal(r1core.ID, r2core.ID); !ok {
+					return fmt.Errorf("Misaligned R1 and R2 records. The 10X format only stores the barcode at the beginning of read 1, meaning Read 2 must have the same sequence ID as Read 1 to reliably assign a barcode to Read 2, but they do not match.\nRead 1:\n%s\nRead 2:\n%s", r1core.ID, r2core.ID)
+				}
+				r2core.Barcode = r1core.Barcode
+				r2core.Valid = r1core.Valid
+			}
+			converter(&r2core, R2Writer.Writer)
+		default:
+			return r2err
+		}
+	}
+	return nil
+}
+
+// Write the barcode map 'bcmap' to 'prefix.bc.map'
+func writeBarcodeMap(prefix string, bcmap map[string][]byte) error {
 	f, err := os.Create(prefix + ".bc.map")
 	if err != nil {
 		return err
@@ -290,12 +278,11 @@ func ConvertFrom10X(fqs []string, convTo, prefix, bcmap string) error {
 	writer := bufio.NewWriter(f)
 	defer writer.Flush()
 
-	for key, val := range seen {
+	for key, val := range bcmap {
 		writer.WriteString(key)
 		writer.WriteByte('\t')
 		writer.Write(val)
 		writer.WriteByte('\n')
 	}
-
 	return nil
 }
