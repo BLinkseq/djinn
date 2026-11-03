@@ -53,7 +53,7 @@ var sortXamCmd = &cobra.Command{
 
 var sortFqCmd = &cobra.Command{
 	Use:                   "sort [options] PREFIX file.R1.fq [file.R2.fq]",
-	Short:                 "Sort read(s) by barcode",
+	Short:                 "Sort reads by barcode",
 	Example:               "sort -@ 4 omykiss.sort omykiss.R1.fq.gz omykiss.R2.fq.gz",
 	Long:                  "Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped) sharing matching read IDs. Writes PREFIX.R1.fq.gz (and PREFIX.R2.fq.gz if paired).",
 	DisableFlagsInUseLine: true,

@@ -63,13 +63,13 @@ var statsXamCmd = &cobra.Command{
 
 var statsFqCmd = &cobra.Command{
 	Use:     "stats [options] file.fq.gz",
-	Short:   "Barcode statistics for a FASTQ file",
+	Short:   "Generate barcode statistics",
 	Example: "stats curratum.R1.fq.gz > curratum.R1.stats",
 	Long: "Accepts one FASTQ file (can be gzipped). Inputs expect barcodes to follow the standard (BX tag), stlfr " +
 		"(@seq_id#barcode), or tellseq (@seq_id:barcode) formats. Writes to stdout the number of reads, the number " +
 		"of reads with a barcode, how many of those barcodes are valid and invalid, and then how many barcodes were bad " +
-		"at each position: haplotagging segments A, C, B, D (e.g. A00), stlfr parts 1-3 (a 0), or tellseq bases (an N). " +
-		"The technology is worked out from the first 100 reads unless --platform is given.",
+		"at each position: haplotagging segments A, C, B, D (e.g. A00), stlfr parts 1-3 (a '0'), or tellseq bases (an 'N'). " +
+		"The technology is inferred from the first 100 reads unless --platform is given.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
