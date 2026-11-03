@@ -79,14 +79,14 @@ var ncbiFq2XamCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		threads, _ := cmd.Flags().GetInt("threads")
-		runtime.GOMAXPROCS(safethreads(threads))
 		var mapfile string
 		if !cmd.Flags().Changed("10x") {
 			mapfile = "" // flag absent
 		} else {
 			mapfile, _ = cmd.Flags().GetString("10x")
 		}
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
 
 		return ncbi.NcbiFq(args, mapfile, threads)
 	},
@@ -101,5 +101,6 @@ func init() {
 	ncbiXam2FqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
 	ncbiFq2XamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
-	ncbiFq2XamCmd.Flags().StringP("bc-list", "b", "", "Valid barcode list (10X Genomics input format only)")
+	ncbiFq2XamCmd.Flags().String("10x", "", "Input is 10X format")
+	ncbiFq2XamCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 }
