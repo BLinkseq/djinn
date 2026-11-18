@@ -3,11 +3,12 @@ package sort
 import (
 	"bytes"
 	"errors"
-	"github.com/blinkseq/djinn/xam"
 	"io"
 	"os"
 	"slices"
 	"sync"
+
+	"github.com/blinkseq/djinn/xam"
 
 	"github.com/biogo/hts/bam"
 	"github.com/biogo/hts/sam"
@@ -32,6 +33,7 @@ func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
 
 	// ── update PG line in header ───────────────────────────────────────────────
 	hdr := br.Header()
+	hdr.SortOrder = sam.UnknownOrder
 	pg := xam.NewPG(hdr, "djinn sam sort "+infile)
 	if err := hdr.AddProgram(pg); err != nil {
 		return err
