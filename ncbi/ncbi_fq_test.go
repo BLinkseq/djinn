@@ -67,7 +67,7 @@ func writeNcbiPlainFastq(t *testing.T, path, id, seq string) {
 }
 
 // captureStdoutBytes redirects os.Stdout to a pipe for the duration of fn
-// and returns everything written to it. fn (NCBIfq10x/NcbiFq) closes
+// and returns everything written to it. fn (Ncbi10XFQ/NcbiFQ) closes
 // os.Stdout itself when it succeeds, which is exactly what signals the
 // drain goroutine below to stop; os.Stdout is restored to orig
 // unconditionally afterward so later tests in this process aren't left
@@ -96,17 +96,17 @@ func captureStdoutBytes(t *testing.T, fn func() error) ([]byte, error) {
 	return <-done, fnErr
 }
 
-func TestNCBIfq10x_SingleFile(t *testing.T) {
+func TestNcbi10XFQ_SingleFile(t *testing.T) {
 	dir := t.TempDir()
 	r1 := filepath.Join(dir, "r1.fq")
 	writeNcbiTenXFastq(t, r1, "read1", "ACGT")
 	wl := writeNcbiTenXWhitelist(t, dir)
 
 	out, err := captureStdoutBytes(t, func() error {
-		return NCBIfq10x([]string{r1}, wl, 1)
+		return Ncbi10XFQ([]string{r1}, wl, 1)
 	})
 	if err != nil {
-		t.Fatalf("NCBIfq10x: %v", err)
+		t.Fatalf("Ncbi10XFQ: %v", err)
 	}
 	recs := decodeBamRecords(t, out)
 	if len(recs) != 1 {
@@ -127,7 +127,7 @@ func TestNCBIfq10x_SingleFile(t *testing.T) {
 	}
 }
 
-func TestNCBIfq10x_PairedFiles(t *testing.T) {
+func TestNcbi10XFQ_PairedFiles(t *testing.T) {
 	dir := t.TempDir()
 	r1 := filepath.Join(dir, "r1.fq")
 	r2 := filepath.Join(dir, "r2.fq")
@@ -136,10 +136,10 @@ func TestNCBIfq10x_PairedFiles(t *testing.T) {
 	wl := writeNcbiTenXWhitelist(t, dir)
 
 	out, err := captureStdoutBytes(t, func() error {
-		return NCBIfq10x([]string{r1, r2}, wl, 1)
+		return Ncbi10XFQ([]string{r1, r2}, wl, 1)
 	})
 	if err != nil {
-		t.Fatalf("NCBIfq10x: %v", err)
+		t.Fatalf("Ncbi10XFQ: %v", err)
 	}
 	recs := decodeBamRecords(t, out)
 	if len(recs) != 2 {
@@ -160,7 +160,7 @@ func TestNCBIfq10x_PairedFiles(t *testing.T) {
 	}
 }
 
-func TestNCBIfq10x_MismatchedMateIDsIsError(t *testing.T) {
+func TestNcbi10XFQ_MismatchedMateIDsIsError(t *testing.T) {
 	dir := t.TempDir()
 	r1 := filepath.Join(dir, "r1.fq")
 	r2 := filepath.Join(dir, "r2.fq")
@@ -169,23 +169,23 @@ func TestNCBIfq10x_MismatchedMateIDsIsError(t *testing.T) {
 	wl := writeNcbiTenXWhitelist(t, dir)
 
 	_, err := captureStdoutBytes(t, func() error {
-		return NCBIfq10x([]string{r1, r2}, wl, 1)
+		return Ncbi10XFQ([]string{r1, r2}, wl, 1)
 	})
 	if err == nil {
 		t.Fatal("expected an error for mismatched mate IDs, got nil")
 	}
 }
 
-func TestNcbiFq_SingleFile(t *testing.T) {
+func TestNcbiFQ_SingleFile(t *testing.T) {
 	dir := t.TempDir()
 	r1 := filepath.Join(dir, "r1.fq")
 	writeNcbiPlainFastq(t, r1, "read1 BX:Z:A01C02B03D04", "ACGT")
 
 	out, err := captureStdoutBytes(t, func() error {
-		return NcbiFq([]string{r1}, "", 1)
+		return NcbiFQ([]string{r1}, 1)
 	})
 	if err != nil {
-		t.Fatalf("NcbiFq: %v", err)
+		t.Fatalf("NcbiFQ: %v", err)
 	}
 	recs := decodeBamRecords(t, out)
 	if len(recs) != 1 {
@@ -213,7 +213,7 @@ func TestNcbiFq_SingleFile(t *testing.T) {
 	}
 }
 
-func TestNcbiFq_PairedFiles(t *testing.T) {
+func TestNcbiFQ_PairedFiles(t *testing.T) {
 	dir := t.TempDir()
 	r1 := filepath.Join(dir, "r1.fq")
 	r2 := filepath.Join(dir, "r2.fq")
@@ -221,10 +221,10 @@ func TestNcbiFq_PairedFiles(t *testing.T) {
 	writeNcbiPlainFastq(t, r2, "read1 BX:Z:A01C02B03D04", "TGCA")
 
 	out, err := captureStdoutBytes(t, func() error {
-		return NcbiFq([]string{r1, r2}, "", 1)
+		return NcbiFQ([]string{r1, r2}, 1)
 	})
 	if err != nil {
-		t.Fatalf("NcbiFq: %v", err)
+		t.Fatalf("NcbiFQ: %v", err)
 	}
 	recs := decodeBamRecords(t, out)
 	if len(recs) != 2 {

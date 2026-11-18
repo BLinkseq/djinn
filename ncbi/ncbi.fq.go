@@ -34,7 +34,7 @@ func newUnmappedBamWriter(threads int, cl string) (*bam.Writer, error) {
 	return bam.NewWriterLevel(os.Stdout, hdr, 4, threads)
 }
 
-func NcbiFq(fqs []string, bcmap string, threads int) error {
+func NcbiFQ(fqs []string, threads int) error {
 	var err error
 
 	// --- assess the data type and get the parser -----------------------------
@@ -43,12 +43,7 @@ func NcbiFq(fqs []string, bcmap string, threads int) error {
 		return fmt.Errorf("%w", err)
 	}
 	if coreParser == nil {
-		if bcmap == "" {
-			return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s. If this is 10X data, a barcode file must be provided to identify inline barcodes.", fqs[0])
-		} else {
-			// SWAP TO THE 10X CONVERTER and return
-			return NCBIfq10x(fqs, bcmap, threads)
-		}
+		return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s. If this is 10X data, a barcode file must be provided to identify inline barcodes.", fqs[0])
 	}
 
 	// ---- BAM writer -------------------------
@@ -98,12 +93,12 @@ func NcbiFq(fqs []string, bcmap string, threads int) error {
 	return nil
 }
 
-// NCBIfq10x converts 10X-format FASTQ (barcode inline in R1's sequence
+// Ncbi10XFQ converts 10X-format FASTQ (barcode inline in R1's sequence
 // prefix) to unmapped BAM. fqs is either a single R1-only file or an
 // [R1, R2] pair -- 10X's barcode lives solely in R1, so R2 (when
 // present) only ever needs that barcode propagated onto it by matching
 // read ID, never re-derived itself.
-func NCBIfq10x(fqs []string, bcmap string, threads int) error {
+func Ncbi10XFQ(fqs []string, bcmap string, threads int) error {
 	// ---- read in barcodes -------------------------------
 	bclist, err := barcodes.LoadTenXFromFile(bcmap)
 	if err != nil {

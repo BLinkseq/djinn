@@ -261,10 +261,7 @@ Loop:
 	return nil
 }
 
-func RemoveUnlinkedFQ(fqs []string, prefix string, keepSingle, barcodecount bool, bcmap string) error {
-	if bcmap != "" {
-		return RemoveUnlinked10XFQ(fqs, prefix, keepSingle, barcodecount, bcmap)
-	}
+func RemoveUnlinkedFQ(fqs []string, prefix string, keepSingle, barcodecount bool) error {
 	// guard against draining stdin when getting barcode counts
 	bcCounts, err := getFqCount(fqs)
 	if err != nil {

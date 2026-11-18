@@ -23,7 +23,7 @@ func TestFilterInvalidFQ_SplitsValidAndInvalid(t *testing.T) {
 	prefix := filepath.Join(dir, "out")
 	invPrefix := true
 
-	if err := FilterInvalidFQ([]string{r1}, prefix, invPrefix, ""); err != nil {
+	if err := FilterInvalidFQ([]string{r1}, prefix, invPrefix); err != nil {
 		t.Fatalf("FilterInvalidFQ returned error: %v", err)
 	}
 
@@ -56,7 +56,7 @@ func TestFilterInvalidFQ_NoInvalidPrefix(t *testing.T) {
 	writeHapFastq(t, r1, reads)
 
 	prefix := filepath.Join(dir, "out")
-	if err := FilterInvalidFQ([]string{r1}, prefix, false, ""); err != nil {
+	if err := FilterInvalidFQ([]string{r1}, prefix, false); err != nil {
 		t.Fatalf("FilterInvalidFQ returned error: %v", err)
 	}
 
@@ -80,7 +80,7 @@ func TestFilterInvalidFQ_PairedFiles(t *testing.T) {
 	writeHapFastq(t, r2, []hapRead{{id: "p1", bc: "TTTT", vx: 1}})
 
 	prefix := filepath.Join(dir, "out")
-	if err := FilterInvalidFQ([]string{r1, r2}, prefix, false, ""); err != nil {
+	if err := FilterInvalidFQ([]string{r1, r2}, prefix, false); err != nil {
 		t.Fatalf("FilterInvalidFQ returned error: %v", err)
 	}
 	if ids := readGzFastqIDs(t, prefix+".R1.fq.gz"); !slices.Contains(ids, "p1") {
@@ -93,7 +93,7 @@ func TestFilterInvalidFQ_PairedFiles(t *testing.T) {
 
 func TestFilterInvalidFQ_MissingFile(t *testing.T) {
 	dir := t.TempDir()
-	err := FilterInvalidFQ([]string{"/nonexistent/file.fq"}, filepath.Join(dir, "out"), false, "")
+	err := FilterInvalidFQ([]string{"/nonexistent/file.fq"}, filepath.Join(dir, "out"), false)
 	if err == nil {
 		t.Fatal("expected an error for a nonexistent input file")
 	}
@@ -139,7 +139,7 @@ func TestFilterInvalid10XFQ_PairedWritesValidR2(t *testing.T) {
 	writeTenXR2(t, r2, []string{"good1"})
 
 	prefix := filepath.Join(dir, "out")
-	if err := FilterInvalidFQ([]string{r1, r2}, prefix, false, wl); err != nil {
+	if err := FilterInvalid10XFQ([]string{r1, r2}, prefix, false, wl); err != nil {
 		t.Fatalf("FilterInvalidFQ (10X paired): %v", err)
 	}
 
@@ -175,7 +175,7 @@ func TestFilterInvalid10XFQ_SeparatesInvalidOutput(t *testing.T) {
 	writeTenXR2(t, r2, []string{"good1", "bad1"})
 
 	prefix := filepath.Join(dir, "out")
-	if err := FilterInvalidFQ([]string{r1, r2}, prefix, true, wl); err != nil {
+	if err := FilterInvalid10XFQ([]string{r1, r2}, prefix, true, wl); err != nil {
 		t.Fatalf("FilterInvalidFQ (10X paired, keepInvalid): %v", err)
 	}
 
@@ -212,7 +212,7 @@ func TestFilterInvalid10XFQ_SingleEnd(t *testing.T) {
 	})
 
 	prefix := filepath.Join(dir, "out")
-	if err := FilterInvalidFQ([]string{r1}, prefix, true, wl); err != nil {
+	if err := FilterInvalid10XFQ([]string{r1}, prefix, true, wl); err != nil {
 		t.Fatalf("FilterInvalidFQ (10X single-end, keepInvalid): %v", err)
 	}
 	if _, err := os.Stat(prefix + ".R2.fq.gz"); err == nil {

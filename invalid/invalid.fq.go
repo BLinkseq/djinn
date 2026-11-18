@@ -14,10 +14,7 @@ import (
 	"github.com/shenwei356/xopen"
 )
 
-func FilterInvalidFQ(fqs []string, prefix string, keepInvalid bool, bcmap string) error {
-	if bcmap != "" {
-		return FilterInvalid10XFQ(fqs, prefix, keepInvalid, bcmap)
-	}
+func FilterInvalidFQ(fqs []string, prefix string, keepInvalid bool) error {
 	seq.ValidateSeq = false
 
 	// determine what kind of linked-read tech it is, once, from the first file

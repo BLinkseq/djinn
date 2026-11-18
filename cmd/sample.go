@@ -140,9 +140,8 @@ var sampleFqCmd = &cobra.Command{
 		}
 		if mapfile == "" {
 			return sample.SampleFq(args[1:], args[0], downsample, seed, invalid)
-		} else {
-			return sample.SampleFq10x(args[1:], args[0], mapfile, downsample, seed)
 		}
+		return sample.SampleFq10x(args[1:], args[0], mapfile, downsample, seed)
 	},
 }
 

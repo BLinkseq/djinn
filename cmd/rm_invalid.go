@@ -115,7 +115,10 @@ var invalidFqCmd = &cobra.Command{
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
-		return invalid.FilterInvalidFQ(args[1:], args[0], inv, mapfile)
+		if mapfile != "" {
+			return invalid.FilterInvalid10XFQ(args[1:], args[0], inv, mapfile)
+		}
+		return invalid.FilterInvalidFQ(args[1:], args[0], inv)
 	},
 }
 

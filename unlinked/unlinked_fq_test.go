@@ -90,7 +90,7 @@ func TestRemoveUnlinkedFQ_SplitsSingletonsAndNot(t *testing.T) {
 
 	prefix := filepath.Join(dir, "out")
 
-	if err := RemoveUnlinkedFQ([]string{r1}, prefix, true, true, ""); err != nil {
+	if err := RemoveUnlinkedFQ([]string{r1}, prefix, true, true); err != nil {
 		t.Fatalf("RemoveUnlinkedFQ returned error: %v", err)
 	}
 
@@ -126,7 +126,7 @@ func TestRemoveUnlinkedFQ_NoSingletonOutput(t *testing.T) {
 	writeHapFastq(t, r1, reads)
 
 	prefix := filepath.Join(dir, "out")
-	if err := RemoveUnlinkedFQ([]string{r1}, prefix, false, false, ""); err != nil {
+	if err := RemoveUnlinkedFQ([]string{r1}, prefix, false, false); err != nil {
 		t.Fatalf("RemoveUnlinkedFQ returned error: %v", err)
 	}
 	mainIDs := readGzFastqIDs(t, prefix+".R1.fq.gz")
@@ -137,7 +137,7 @@ func TestRemoveUnlinkedFQ_NoSingletonOutput(t *testing.T) {
 
 func TestRemoveUnlinkedFQ_MissingFile(t *testing.T) {
 	dir := t.TempDir()
-	err := RemoveUnlinkedFQ([]string{"/nonexistent/file.fq"}, filepath.Join(dir, "out"), false, false, "")
+	err := RemoveUnlinkedFQ([]string{"/nonexistent/file.fq"}, filepath.Join(dir, "out"), false, false)
 	if err == nil {
 		t.Fatal("expected an error for a nonexistent input file")
 	}
@@ -189,7 +189,7 @@ func TestRemoveUnlinked10XFQ_SplitsSingletonsAndNot(t *testing.T) {
 	writeTenXR2Unlinked(t, r2, []string{"a1", "a2", "c1"})
 
 	prefix := filepath.Join(dir, "out")
-	if err := RemoveUnlinkedFQ([]string{r1, r2}, prefix, true, true, wl); err != nil {
+	if err := RemoveUnlinked10XFQ([]string{r1, r2}, prefix, true, true, wl); err != nil {
 		t.Fatalf("RemoveUnlinkedFQ (10X): %v", err)
 	}
 
@@ -232,7 +232,7 @@ func TestRemoveUnlinked10XFQ_SingleEnd(t *testing.T) {
 	})
 
 	prefix := filepath.Join(dir, "out")
-	if err := RemoveUnlinkedFQ([]string{r1}, prefix, false, false, wl); err != nil {
+	if err := RemoveUnlinked10XFQ([]string{r1}, prefix, false, false, wl); err != nil {
 		t.Fatalf("RemoveUnlinkedFQ (10X single-end): %v", err)
 	}
 	if _, err := os.Stat(prefix + ".R2.fq.gz"); err == nil {

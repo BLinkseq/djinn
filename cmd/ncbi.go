@@ -42,7 +42,7 @@ var ncbiXam2FqCmd = &cobra.Command{
 	},
 }
 
-var ncbiFq2XamCmd = &cobra.Command{
+var NcbiFq2XamCmd = &cobra.Command{
 	Use:                   "ncbi [options] file.R1.fq.gz [file.R2.fq.gz]",
 	Short:                 "FASTQ → BAM conversion for NCBI",
 	Example:               "ncbi -t 10 obesus.R1.fq.gz obesus.R2.fq.gz > obesus.bam",
@@ -88,18 +88,21 @@ var ncbiFq2XamCmd = &cobra.Command{
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
-		return ncbi.NcbiFq(args, mapfile, threads)
+		if mapfile != "" {
+			return ncbi.Ncbi10XFQ(args, mapfile, threads)
+		}
+		return ncbi.NcbiFQ(args, threads)
 	},
 }
 
 func init() {
 	samCmd.AddCommand(ncbiXam2FqCmd)
-	fqCmd.AddCommand(ncbiFq2XamCmd)
+	fqCmd.AddCommand(NcbiFq2XamCmd)
 
 	//---Command line arguments-------------
 	ncbiXam2FqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
-	ncbiFq2XamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
-	ncbiFq2XamCmd.Flags().String("10x", "", "Input is 10X format")
-	ncbiFq2XamCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
+	NcbiFq2XamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
+	NcbiFq2XamCmd.Flags().String("10x", "", "Input is 10X format")
+	NcbiFq2XamCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
 }

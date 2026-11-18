@@ -127,7 +127,10 @@ var unlinkedFqCmd = &cobra.Command{
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
-		return unlinked.RemoveUnlinkedFQ(args[1:], args[0], singles, bcCount, mapfile)
+		if mapfile != "" {
+			return unlinked.RemoveUnlinked10XFQ(args[1:], args[0], singles, bcCount, mapfile)
+		}
+		return unlinked.RemoveUnlinkedFQ(args[1:], args[0], singles, bcCount)
 	},
 }
 
