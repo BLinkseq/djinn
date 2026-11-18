@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/biogo/hts/sam"
 	"github.com/blinkseq/djinn/xam"
 )
 
@@ -80,8 +81,8 @@ func safethreads(threads int) int {
 func isSamSorted(infile string) error {
 	_, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, 1)
 	// Note in the file's header that djinn touched it, as the other djinn commands do.
-	if so := br.Header().SortOrder.String(); so != "coordinate" {
-		return fmt.Errorf("Input must be coordinate sorted, but file header reports SO:%s", so)
+	if so := br.Header().SortOrder; so != sam.Coordinate {
+		return fmt.Errorf("Input must be coordinate sorted, but file header reports SO:%s", so.String())
 	}
 	return nil
 }
