@@ -15,7 +15,7 @@ var sortXamCmd = &cobra.Command{
 	Use:                   "sort [options] file.bam",
 	Short:                 "Sort reads by barcode",
 	Example:               "sort -t 4 curratum.bam > curratum.sort.bam",
-	Long:                  "Input must be one SAM/BAM file. Writes to stdout.",
+	Long:                  "Sorts reads by barcode using a k-way merge (like samtools), where k is the number of threads. Input must be one SAM/BAM file. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
