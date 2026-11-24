@@ -25,7 +25,7 @@ export default defineConfig({
         codeblocks(),
         starlightUiTweaks({
           navbarLinks: [
-           { label : 'Version: 3.0', href: "javascript:void(0);"},
+           { label : 'Version: 3.1', href: "javascript:void(0);"},
            { label: "BLink-seq", href: "https://blinkseq.github.io"},
         ],
       }),

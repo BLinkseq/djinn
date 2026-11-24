@@ -19,14 +19,16 @@ needs no `--bc-list` at all.
 In all cases, a file will be created with the barcode conversion map.
 
 ## Usage
-Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped), with barcodes specified in BX:Z SAM tag. Writes prefix.R1.fq.gz (and prefix.R2.fq.gz if paired). The first positional argument outFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x). Specifying 10X output will draw barcodes from the official 10X Genomics barcode whitelist.
+Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped),
+with barcodes specified in BX:Z SAM tag. Writes prefix.R1.fq.gz (and prefix.R2.fq.gz if paired).
+The first positional argument outFormat specifies the target data format (standard, haplotagging,
+tellseq, stlfr, 10x). Specifying 10X output will draw barcodes from the official 10X Genomics barcode whitelist.
 
 ```bash
 convert [options] TARGET PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
-Example:
-```bash
+```bash title="Example"
 djinn fq convert 10x gcurratum_as10X gcurratum.R1.fq.gz gcurratum.R2.fq.gz
 ```
 
@@ -40,6 +42,7 @@ djinn fq convert 10x gcurratum_as10X gcurratum.R1.fq.gz gcurratum.R2.fq.gz
 | `TARGET`         | output barcode and FASTQ style: `10x`, `haplotagging`, `tellseq`, `stlfr`, `standard` |
 | `file.R*.fq.gz`  | FASTQ file or file pair <Badge text="required" variant="tip" />                                       |
 | `-b` `--bc-list`  | Valid barcode list (or literal `10x` for the embedded whitelist) <Badge text="required: for 10X Genomics input" variant="tip" />   |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |
 
 
 <details>

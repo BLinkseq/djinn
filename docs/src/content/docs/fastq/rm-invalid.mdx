@@ -22,8 +22,7 @@ invalid.
 rm-invalid [--invalid] PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
-Example: remove invalid barcodes and retain them in a separate file
-```bash 
+```bash title="Example: remove invalid barcodes and retain them in a separate file"
 djinn fq rm-invalid --invalid echinda.valid echidna.R*.fq.gz
 ```
 
@@ -34,3 +33,4 @@ djinn fq rm-invalid --invalid echinda.valid echidna.R*.fq.gz
 | `file.R*.fq.gz`   | FASTQ file or file pair <Badge text="required" variant="tip" />                                       |
 | `-i` `--invalid` | output records with invalid barcodes to `PREFIX.invalid.*`                                 |
 | `-b` `--bc-list`  | Valid barcode list, or literal `10x` for the embedded official whitelist <Badge text="required: for 10X Genomics input" variant="tip" /> |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |

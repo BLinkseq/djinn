@@ -19,13 +19,11 @@ keep all the reads associated with `-d` number of barcodes or fraction of barcod
 sample -d <value> [-i] PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
-Example: downsample fastq pair, including invalid barcodes
-```bash
+```bash title="Example: downsample fastq pair, including invalid barcodes"
 djinn fq sample -d 1000 -i sample1.sub1000 sample1.F.fq.gz sample1.R.fq.gz
 ```
 
-Example: reproducibly downsample barcodes by 50%
-```bash
+```bash title="Example: reproducibly downsample barcodes by 50%"
 djinn fq sample -d 0.5 -s 111 sample1.half sample1.F.fq.gz sample1.R.fq.gz
 ```
 
@@ -37,3 +35,4 @@ djinn fq sample -d 0.5 -s 111 sample1.half sample1.F.fq.gz sample1.R.fq.gz
 | `-d` `--downsample` | number/fraction of barcodes to downsample to   <Badge text="required" variant="tip" /> |
 | `-i` `--invalid`    | include invalid barcodes in downsampling                                               |
 | `-s` `--seed`       | random seed for sampling <Badge text="optional" variant="note" />                       |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |

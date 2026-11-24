@@ -26,13 +26,11 @@ is ready for use in [arachne](https://github.com/blinkseq/arachne).
 sort [options] PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
-Example: sort with specified temporary folder
-```bash
+```bash title="Example: sort with specified temporary folder"
 djinn fq sort -t pb peb.sort pebbles.R1.fq.gz pebbles.R2.fq.gz
 ```
 
-Example: return barcode counts and convert to standard format
-```bash
+```bash title="Example: sort and convert to standard format (e.g., for arachne input)"
 djinn fq sort -s peb.sort data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
 ```
 

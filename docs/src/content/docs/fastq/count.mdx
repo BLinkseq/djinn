@@ -25,8 +25,7 @@ For 10X input, only the first file (R1) is read, since that's the only place the
 count file.R1.fq.gz [file.R2.fq.gz] > out.count
 ```
 
-Example: count only valid barcodes
-```bash
+```bash title="Example: count only valid barcodes"
 djinn fq count sample1.F.fq.gz sample1.R.fq.gz > sample1.bxcount
 ```
 
@@ -36,3 +35,4 @@ djinn fq count sample1.F.fq.gz sample1.R.fq.gz > sample1.bxcount
 | `file.R*.fq.gz`   | FASTQ file or file pair <Badge text="required" variant="tip" />                          |
 | `-i` `--invalid`  | Include invalid barcodes                                                      |
 | `-b` `--bc-list`  | Valid barcode list, or literal `10x` for the embedded official whitelist <Badge text="required: for 10X Genomics input" variant="tip" /> |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |

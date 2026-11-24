@@ -23,8 +23,7 @@ or the literal value `10x` to use the official 10X Genomics whitelist embedded i
 rm-unlinked [--unlinked] PREFIX file.R1.fq.gz [file.R2.fq.gz]
 ```
 
-Example: remove unlinked barcodes and retain them in a separate file
-```bash 
+```bash title="Example: remove unlinked barcodes and retain them in a separate file"
 djinn fq rm-unlinked --unlinked hyena.clean hyena.R*.fq.gz
 ```
 
@@ -36,3 +35,4 @@ djinn fq rm-unlinked --unlinked hyena.clean hyena.R*.fq.gz
 | `--bc-count`   | write valid barcode counts to `PREFIX.count` <Badge text="optional" variant="note" />    |
 | `-u` `--unlinked`   | write valid singleton records to `PREFIX.unlinked`                                |
 | `-b` `--bc-list`  | Valid barcode list, or literal `10x` for the embedded official whitelist <Badge text="required: for 10X Genomics input" variant="tip" /> |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |
