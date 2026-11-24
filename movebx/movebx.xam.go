@@ -8,14 +8,14 @@ import (
 	"github.com/blinkseq/djinn/xam"
 )
 
-var BX [2]byte = [2]byte{'B', 'X'}
+var BXAUX [2]byte = [2]byte{'B', 'X'}
 
 // MoveTagLast shifts the first occurrence of tag (such as "BX") to the end of
 // rec.AuxFields in place without allocating a new slice.
 func moveTagLast(rec *sam.Record) {
 	aux := rec.AuxFields
 	for i, entry := range aux {
-		if entry.Tag() == BX {
+		if entry.Tag() == BXAUX {
 			target := aux[i]
 			copy(aux[i:], aux[i+1:])
 			aux[len(aux)-1] = target
@@ -23,7 +23,7 @@ func moveTagLast(rec *sam.Record) {
 	}
 }
 
-func moveBxXam(infile string, threads int, asSam bool) error {
+func MoveBxXam(infile string, threads int, asSam bool) error {
 	readThread, writeThread := xam.IoThreads(threads)
 
 	// ── open reader ───────────────────────────────────────────────────────────

@@ -163,7 +163,7 @@ func SortFqByBX(fqs []string, outPrefix, tmpDir string, threads int, standardize
 		fmtType = "10x"
 	}
 
-	converter, err := formatConverter(fmtType, standardize)
+	converter, err := fastq.FormatConverter(fmtType, standardize)
 	if err != nil {
 		return err
 	}
@@ -339,27 +339,6 @@ func SortFqByBX(fqs []string, outPrefix, tmpDir string, threads int, standardize
 	}
 
 	return mergeFqChunks(tmpFiles, outPrefix, converter, standardize, numMates)
-}
-
-// formatConverter picks which fastq.CoreFq writer method reconstructs
-// output records: the format-specific one matching fmtType (so output
-// round-trips the input format), or ToStandard when standardize is set.
-func formatConverter(fmtType string, standardize bool) (func(*fastq.CoreFq, *bufio.Writer), error) {
-	if standardize {
-		return (*fastq.CoreFq).ToStandard, nil
-	}
-	switch fmtType {
-	case "haplotagging":
-		return (*fastq.CoreFq).ToHaplotagging, nil
-	case "stlfr":
-		return (*fastq.CoreFq).ToStlfr, nil
-	case "tellseq":
-		return (*fastq.CoreFq).ToTellseq, nil
-	case "10x":
-		return (*fastq.CoreFq).ToTenX, nil
-	default:
-		return nil, fmt.Errorf("unsupported linked-read technology %q for format-preserving output; use --standardize", fmtType)
-	}
 }
 
 // sortAndSpill sorts one chunk by barcode and writes it to a fresh,

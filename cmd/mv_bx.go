@@ -37,17 +37,16 @@ var mvBxXamCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return movebx.moveBxXam(args[0], sam, threads)
+		return movebx.MoveBxXam(args[0], threads, sam)
 	},
 }
 
 var mvBxFqCmd = &cobra.Command{
-	Use:     "rm-invalid <-i> PREFIX file.R1.fq [file.R2.fq]",
-	Short:   "Remove reads with invalid barcodes",
-	Example: "rm-invalid -i invalid/omykiss omykiss.valid omykiss.R1.fq omykiss.R2.fq",
-	Long: "Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped). " +
-		"Inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
-		"(@seq_id:barcode) formats.",
+	Use:     "mv-bx <-t> PREFIX file.R1.fq [file.R2.fq]",
+	Short:   "Move BX tags to record ends",
+	Example: "mv-bx omyk.santitized omykiss.R1.fq omykiss.R2.fq",
+	Long: "Accepts one or two paired FASTQ files (R1 and R2, can be gzipped). " +
+		"Inputs expect barcodes to follow the standard or haplotagging formats (which have BX tags).",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -75,7 +74,7 @@ var mvBxFqCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
-		return nil
+		return movebx.MoveBxFq(args[1:], args[0])
 	},
 }
 
@@ -84,13 +83,10 @@ func init() {
 	fqCmd.AddCommand(mvBxFqCmd)
 
 	//---Command line arguments-------------
-	invalidXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
-	invalidXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
+	mvBxXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
+	mvBxXamCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 
-	//invalidFqCmd.Flags().String("10x", "", "Input is 10X format")
-	//invalidFqCmd.Flags().Lookup("10x").NoOptDefVal = "10x" // value used when bare --10x
-	//invalidFqCmd.Flags().BoolP("invalid", "i", false, "Write records with invalid barcodes to prefix.invalid")
-	//invalidFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
+	mvBxFqCmd.Flags().IntP("threads", "@", 2, "Threads to use")
 }
 
 //moveBxXam(infile string, threads int, asSam bool)

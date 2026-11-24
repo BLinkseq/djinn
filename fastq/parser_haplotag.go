@@ -14,7 +14,7 @@ import "github.com/shenwei356/bio/seqio/fastx"
 func Haplotag2Corefq(rec *fastx.Record) (core CoreFq, ok bool) {
 	id, desc, casava := splitCASAVA(rec.ID, rec.Desc)
 
-	valStart, valEnd, fs, fe, found := findField(desc, BXTAG)
+	valStart, valEnd, fs, fe, found := FindField(desc, BXTAG)
 	if !found {
 		return CoreFq{
 			ID:       id,
@@ -30,7 +30,7 @@ func Haplotag2Corefq(rec *fastx.Record) (core CoreFq, ok bool) {
 	desc = spliceField(desc, fs, fe)
 
 	valid := !isInvalidBarcode(bc)
-	if vs, ve, vfs, vfe, vfound := findField(desc, VXTAG); vfound && ve-vs == 1 && (desc[vs] == '0' || desc[vs] == '1') {
+	if vs, ve, vfs, vfe, vfound := FindField(desc, VXTAG); vfound && ve-vs == 1 && (desc[vs] == '0' || desc[vs] == '1') {
 		valid = desc[vs] == '1'
 		desc = spliceField(desc, vfs, vfe)
 	}

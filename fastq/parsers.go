@@ -35,7 +35,7 @@ func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), st
 		// (the usual stLFR style: ...#12_34_56/1) it would never be found.
 		id, desc, _ := splitCASAVA(rec.ID, rec.Desc)
 		// is there a BX tag in the comments/description?
-		if _, _, _, _, found := findField(desc, BXTAG); found {
+		if _, _, _, _, found := FindField(desc, BXTAG); found {
 			h += 1
 		}
 		// if not, look for tellseq

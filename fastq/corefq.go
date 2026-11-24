@@ -87,7 +87,7 @@ func isAlphaNumeric(b byte) bool {
 // nextField returns the [start,end) range of the next whitespace-delimited
 // field in data at or after idx, and the offset to resume scanning from.
 // ok is false once no more fields remain.
-func nextField(data []byte, idx int) (start, end, next int, ok bool) {
+func NextField(data []byte, idx int) (start, end, next int, ok bool) {
 	n := len(data)
 	for idx < n && isSpace(data[idx]) {
 		idx++
@@ -106,9 +106,9 @@ func nextField(data []byte, idx int) (start, end, next int, ok bool) {
 // returns the [valStart,valEnd) range of the value after prefix along with
 // the [fieldStart,fieldEnd) range of the whole field (for splicing it back
 // out of desc). ok is false if no field has that prefix.
-func findField(desc, prefix []byte) (valStart, valEnd, fieldStart, fieldEnd int, ok bool) {
+func FindField(desc, prefix []byte) (valStart, valEnd, fieldStart, fieldEnd int, ok bool) {
 	for i := 0; ; {
-		fs, fe, next, more := nextField(desc, i)
+		fs, fe, next, more := NextField(desc, i)
 		if !more {
 			return 0, 0, 0, 0, false
 		}
@@ -166,7 +166,7 @@ func isIlluminaNewField(f []byte) bool {
 // IlluminaNew.FindIndex(desc).
 func findIlluminaNew(desc []byte) (start, end int, ok bool) {
 	for i := 0; ; {
-		fs, fe, next, more := nextField(desc, i)
+		fs, fe, next, more := NextField(desc, i)
 		if !more {
 			return 0, 0, false
 		}
@@ -228,14 +228,21 @@ func (rec *CoreFq) ToHaplotagging(writer *bufio.Writer) {
 		writer.WriteByte(FwSlash)
 		writer.WriteByte(rec.CASAVA[0])
 	}
-	writer.WriteByte(TabSep)
 	//TODO ONLY WRITE SAM-COMPLIANT COMMENTS
+	if len(rec.Comments) > 0 {
+		writer.WriteByte(TabSep)
+		writer.Write(rec.Comments)
+	}
+	writer.WriteByte(TabSep)
 	writer.Write(BxTagConst)
 	writer.Write(rec.Barcode)
+
 	writer.WriteByte(Newline)
 	writer.Write(rec.Seq)
+
 	writer.WriteByte(Newline)
 	writer.WriteByte(PlusSign)
+
 	writer.WriteByte(Newline)
 	writer.Write(rec.Qual)
 	writer.WriteByte(Newline)
@@ -257,16 +264,6 @@ func (rec *CoreFq) ToStandard(writer *bufio.Writer) {
 		writer.WriteByte(FwSlash)
 		writer.WriteByte(rec.CASAVA[0])
 	}
-	writer.WriteByte(TabSep)
-	writer.Write(BxTagConst)
-	writer.Write(rec.Barcode)
-	writer.WriteByte(TabSep)
-	writer.Write(VxTagConst)
-	if rec.Valid {
-		writer.WriteByte('1')
-	} else {
-		writer.WriteByte('0')
-	}
 	// Comments holds whatever other SAM-style aux text remained in the
 	// description once CASAVA/the barcode were pulled out of it -- carry
 	// it through rather than silently dropping it.
@@ -274,10 +271,23 @@ func (rec *CoreFq) ToStandard(writer *bufio.Writer) {
 		writer.WriteByte(TabSep)
 		writer.Write(rec.Comments)
 	}
+	writer.WriteByte(TabSep)
+	writer.Write(VxTagConst)
+	if rec.Valid {
+		writer.WriteByte('1')
+	} else {
+		writer.WriteByte('0')
+	}
+	writer.WriteByte(TabSep)
+	writer.Write(BxTagConst)
+	writer.Write(rec.Barcode)
+
 	writer.WriteByte(Newline)
 	writer.Write(rec.Seq)
+
 	writer.WriteByte(Newline)
 	writer.WriteByte(PlusSign)
+
 	writer.WriteByte(Newline)
 	writer.Write(rec.Qual)
 	writer.WriteByte(Newline)
@@ -489,4 +499,25 @@ func (c *CoreFq) ToSamRecord() (*sam.Record, error) {
 		}
 	}
 	return rec, nil
+}
+
+// formatConverter picks which fastq.CoreFq writer method reconstructs
+// output records: the format-specific one matching fmtType (so output
+// round-trips the input format), or ToStandard when standardize is set.
+func FormatConverter(fmtType string, standardize bool) (func(*CoreFq, *bufio.Writer), error) {
+	if standardize {
+		return (*CoreFq).ToStandard, nil
+	}
+	switch fmtType {
+	case "haplotagging":
+		return (*CoreFq).ToHaplotagging, nil
+	case "stlfr":
+		return (*CoreFq).ToStlfr, nil
+	case "tellseq":
+		return (*CoreFq).ToTellseq, nil
+	case "10x":
+		return (*CoreFq).ToTenX, nil
+	default:
+		return nil, fmt.Errorf("unsupported linked-read technology %q for format-preserving output; use --standardize", fmtType)
+	}
 }
