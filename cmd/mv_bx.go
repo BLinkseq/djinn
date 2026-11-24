@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/blinkseq/djinn/movebx"
 	"github.com/spf13/cobra"
 )
 
