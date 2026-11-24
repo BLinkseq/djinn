@@ -32,7 +32,6 @@ var fqCmd = &cobra.Command{
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
-
 	rootCmd.AddCommand(fqCmd)
 	rootCmd.AddCommand(samCmd)
 }

@@ -22,7 +22,7 @@ var unlinkedXamCmd = &cobra.Command{
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			fmt.Printf("%s", cmd.UsageString())
-			return fmt.Errorf("please provide inputs")
+			return fmt.Errorf("please provide an input alignment file")
 		}
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return err
