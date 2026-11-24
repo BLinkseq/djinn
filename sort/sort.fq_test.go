@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"github.com/blinkseq/djinn/fastq"
 	"io"
 	mathrand "math/rand"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/blinkseq/djinn/fastq"
 )
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -251,7 +252,7 @@ func TestSortFqByBX_StandardizeFlag(t *testing.T) {
 	}
 
 	raw := readGzFirstHeaderLine(t, prefix+".R1.fq.gz")
-	if raw != "@a\tBX:Z:AAAA\tVX:i:1" {
+	if raw != "@a\tVX:i:1\tBX:Z:AAAA" {
 		t.Errorf("expected ToStandard-style header, got %q", raw)
 	}
 }
