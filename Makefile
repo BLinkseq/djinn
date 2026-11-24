@@ -1,4 +1,4 @@
-VERSION=3.0
+VERSION=3.1
 
 djinn:
 	@echo "Building djinn"

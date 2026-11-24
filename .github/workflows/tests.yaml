@@ -79,6 +79,9 @@ jobs:
       - name: fq sort
         if: success() || failure()
         run: djinn fq sort sorted test/test.R1.fq.gz test/test.R2.fq.gz && zcat sorted.R1.fq.gz
+      - name: fq mv-bx
+        if: success() || failure()
+        run: djinn fq mv-bx mxbx test/test.R1.fq.gz test/test.R2.fq.gz && zcat mxbx.R1.fq.gz
       - name: fq rm-invalid
         if: success() || failure()
         run: djinn fq rm-invalid valid test/test.R1.fq.gz test/test.R2.fq.gz && zcat valid.R1.fq.gz
@@ -111,6 +114,9 @@ jobs:
       - name: sam sort
         if: success() || failure()
         run: djinn sam sort test/test.bam | samtools view
+      - name: sam mv-bx
+        if: success() || failure()
+        run: djinn sam mv-bx test/test.bam | samtools view
       - name: sam rm-invalid
         if: success() || failure()
         run: djinn sam rm-invalid test/test.bam | samtools view
