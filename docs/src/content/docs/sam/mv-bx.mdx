@@ -1,0 +1,26 @@
+---
+title: Move BX barcodes to record ends
+sidebar:
+  order: 4
+  label: mv-bx
+---
+import { Aside, Badge } from '@astrojs/starlight/components';
+
+In the event downstream software requires that linked-read `BX:Z` barcodes need to be at the end of
+an alignment record, this command moves the `BX:Z` barcode to the end of the record, keeping everything else intact.
+SAM/BAM files created by `djinn` should already have `BX:Z` as the terminal AUX field in SAM records.
+
+## Usage
+```bash
+mv-bx [--threads] file.bam > file.out.bam
+```
+
+```bash title="Example"
+djinn sam mv-bx -@ 6 otter.bam > otter.termbx.bam
+```
+
+## Options
+| argument         | description                                                                                |
+| :--------------- | :----------------------------------------------------------------------------------------- |
+| `file.bam`           | SAM/BAM file <Badge text="required" variant="tip" />                          |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |

@@ -1,0 +1,33 @@
+---
+title: Move BX barcodes to record ends
+sidebar:
+  order: 4
+  label: mv-bx
+---
+import { Aside, Badge } from '@astrojs/starlight/components';
+
+Some software, like QuickDeconvolution expects the linked-read barcode to both be in a `BX:Z` SAM style
+tag **and** as the terminal text on the FASTQ header line. This command moves the `BX:Z` barcode to the
+end of the header, keeping everything else intact. FASTQ files created by `djinn` should already have
+the `BX:Z` tag as the terminal comment in record headers.
+
+<Aside title="Limited usage">
+    This command is intended only for haplotagging and Standard style data, where barcodes
+    are encoded in a `BX:Z` tag. 
+</Aside>
+
+## Usage
+```bash
+mv-bx [--threads] PREFIX file.R1.fq.gz [file.R2.fq.gz]
+```
+
+```bash title="Example"
+djinn fq mv-bx -@ 6 echinda.sanitized echidna.R*.fq.gz
+```
+
+## Options
+| argument         | description                                                                                |
+| :--------------- | :----------------------------------------------------------------------------------------- |
+| `PREFIX`          |  output filename prefix   <Badge text="required" variant="tip" />    |
+| `file.R*.fq.gz`   | FASTQ file or file pair <Badge text="required" variant="tip" />                                       |
+| `-@` `--threads`  | Threads to use (default: 2)                                         |
